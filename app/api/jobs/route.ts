@@ -78,6 +78,7 @@ export async function POST(request: Request) {
       match_score: match.score,
       match_why: [match.why],
       fit_tags: match.fitTags,
+      match_checks: match.checks,
       match_gaps: match.gapTags,
       domain_score: match.domainScore,
       skills_score: match.skillsScore,

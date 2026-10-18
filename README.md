@@ -12,6 +12,8 @@ Live at: https://huntboard-nu.vercel.app
 
 - **Onboarding**: a four-step setup (target titles, locations, must-haves and
   deal-breakers, master CV) before the Inbox has anything to show.
+- **Today** (home): a short, finite list of your strongest unreviewed matches, 10 a day (ask for 10 more when you want them). Split view with the reasons it's here, one-tap Save / Skip / Not for me, a "What was dropped?" panel, and a follow-up banner. Keys: J/K move, S save, X skip. Light and dark themes (follows your device, switchable in the sidebar or Settings).
+- **All matches** (`/all`): the full searchable, sortable list with bulk actions, paste-a-link and add-a-job. (Previously called the Inbox.)
 - **Inbox**: scans RemoteOK, Remotive, Himalayas, Arbeitnow, Jobicy, and
   Adzuna, or scores a single pasted job URL instantly. Every row shows a
   score, a one-sentence reason, and fit/gap tags. Sortable by recency or

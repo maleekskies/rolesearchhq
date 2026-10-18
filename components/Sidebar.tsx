@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { Inbox as InboxIcon, Kanban, FileText, Settings as SettingsIcon } from 'lucide-react';
 import AccountBar from '@/components/AccountBar';
 
 const NAV_ITEMS = [
-  { href: '/', label: 'Inbox', icon: InboxIcon },
+  { href: '/', label: 'Today', icon: InboxIcon },
   { href: '/pipeline', label: 'Pipeline', icon: Kanban },
   { href: '/kit-studio', label: 'Kit Studio', icon: FileText },
   { href: '/settings', label: 'Settings', icon: SettingsIcon },
@@ -14,6 +15,10 @@ const NAV_ITEMS = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  // Mark the clicked item as active straight away; the page itself may take a
+  // moment to arrive, and a menu that doesn't react feels broken.
+  const [pending, setPending] = useState<string | null>(null);
+  useEffect(() => setPending(null), [pathname]);
 
   if (['/login', '/privacy', '/terms', '/reset-password'].includes(pathname)) return null;
 
@@ -23,11 +28,12 @@ export default function Sidebar() {
       <nav className="hidden md:flex flex-col w-56 shrink-0 px-4 py-6 gap-1">
         <div className="font-display font-bold text-xl grad-text mb-8 px-2">Huntboard</div>
         {NAV_ITEMS.map((item) => {
-          const active = pathname === item.href;
+          const active = (pending ?? pathname) === item.href;
           return (
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => setPending(item.href)}
               className={`relative px-3 py-2 rounded text-sm transition-colors ${
                 active ? 'text-text font-medium' : 'text-muted hover:text-text'
               }`}
@@ -45,12 +51,13 @@ export default function Sidebar() {
       {/* Mobile: floating pill nav, icons with a gradient badge on the active item */}
       <nav className="md:hidden fixed bottom-4 inset-x-4 z-20 bg-surface/95 backdrop-blur border border-border rounded-2xl shadow-lg flex px-1 py-1">
         {NAV_ITEMS.map((item) => {
-          const active = pathname === item.href;
+          const active = (pending ?? pathname) === item.href;
           const Icon = item.icon;
           return (
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => setPending(item.href)}
               className="flex-1 flex flex-col items-center gap-1 py-2 rounded-xl transition-colors"
             >
               <span

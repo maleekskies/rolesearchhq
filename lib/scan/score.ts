@@ -126,6 +126,7 @@ export interface MatchResult {
   why: string;
   fitTags: string[];
   gapTags: string[];
+  checks: string[]; // plain-language reasons shown as "Why it's here"
   hardExcluded: boolean;
   excludeReason?: 'deal_breaker' | GateReason;
 }
@@ -212,6 +213,7 @@ export function computeMatch(
     why,
     fitTags: [],
     gapTags: [tag],
+    checks: [],
     hardExcluded: true,
     excludeReason: reason,
   });
@@ -267,8 +269,18 @@ export function computeMatch(
     );
   }
 
+  const checks: string[] = [];
+  if (matchedTitle) checks.push(`Title is close to "${matchedTitle.replace(/\s*\(.*?\)\s*/g, ' ').trim()}"`);
+  if (mustHaveHits.length > 0) checks.push(`Mentions ${mustHaveHits.join(', ')}`);
+  const isRemote = !jobLocation || /\b(remote|anywhere|worldwide|global|work from home)\b/i.test(jobLocation);
+  checks.push(isRemote ? 'Remote and open to your location' : 'The location works for you');
+  const spoken = opts.languages?.length ? opts.languages : ['English'];
+  checks.push(`Needs only ${spoken.join(' and ')}`);
+  checks.push('No on-site, clearance or citizenship requirement found');
+
   return {
     score: overall,
+    checks,
     domainScore,
     skillsScore,
     seniorityScore: seniority,

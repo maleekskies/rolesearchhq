@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
+import { getUserId } from '@/lib/supabase/user';
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import KitReview from '@/components/KitReview';
@@ -12,15 +14,14 @@ export default async function KitStudioPage({
   searchParams: { job?: string };
 }) {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const userId = await getUserId(supabase);
+  if (!userId) redirect('/login');
 
   if (!searchParams.job) {
     const { data: recentKits } = await supabase
       .from('kits')
       .select('job_id, status, generated_at, jobs!inner(id, title, company, user_id)')
-      .eq('jobs.user_id', user!.id)
+      .eq('jobs.user_id', userId)
       .order('generated_at', { ascending: false })
       .limit(10);
 
@@ -61,22 +62,16 @@ export default async function KitStudioPage({
     );
   }
 
-  const { data: job } = await supabase
-    .from('jobs')
-    .select('*')
-    .eq('id', searchParams.job)
-    .eq('user_id', user!.id)
-    .maybeSingle();
-
-  const { data: kit } = job
-    ? await supabase
-        .from('kits')
-        .select('*')
-        .eq('job_id', job.id)
-        .order('generated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-    : { data: null };
+  const [{ data: job }, { data: kit }] = await Promise.all([
+    supabase.from('jobs').select('*').eq('id', searchParams.job).eq('user_id', userId).maybeSingle(),
+    supabase
+      .from('kits')
+      .select('*')
+      .eq('job_id', searchParams.job)
+      .order('generated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
   if (!job || !kit) {
     return (

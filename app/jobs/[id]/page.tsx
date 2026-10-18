@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
-import { notFound } from 'next/navigation';
+import { getUserId } from '@/lib/supabase/user';
+import { notFound, redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import JobDetail from '@/components/JobDetail';
 
@@ -8,26 +9,23 @@ export const dynamic = 'force-dynamic';
 
 export default async function JobDetailPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const userId = await getUserId(supabase);
+  if (!userId) redirect('/login');
 
-  const { data: job } = await supabase
-    .from('jobs')
-    .select('*')
-    .eq('id', params.id)
-    .eq('user_id', user!.id)
-    .single();
+  // The kit lookup doesn't depend on the job lookup (row-level security
+  // already limits kits to your own jobs), so both run at once.
+  const [{ data: job }, { data: kit }] = await Promise.all([
+    supabase.from('jobs').select('*').eq('id', params.id).eq('user_id', userId).single(),
+    supabase
+      .from('kits')
+      .select('*')
+      .eq('job_id', params.id)
+      .order('generated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
   if (!job) notFound();
-
-  const { data: kit } = await supabase
-    .from('kits')
-    .select('*')
-    .eq('job_id', job.id)
-    .order('generated_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
 
   return <JobDetail job={job} kit={kit} />;
 }

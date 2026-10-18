@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
+import { getUserId } from '@/lib/supabase/user';
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 
@@ -14,22 +16,21 @@ const COLUMNS = [
 
 export default async function PipelinePage() {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const userId = await getUserId(supabase);
+  if (!userId) redirect('/login');
 
+  // One query: each job brings its kit status along, instead of a second
+  // lookup that had to wait for the first.
   const { data: jobs } = await supabase
     .from('jobs')
-    .select('id, title, company, status, match_score, next_action, next_date, interview_at, interview_notes, updated_at')
-    .eq('user_id', user!.id)
+    .select('id, title, company, status, match_score, next_action, next_date, interview_at, interview_notes, updated_at, kits(status)')
+    .eq('user_id', userId)
     .in('status', COLUMNS.map((c) => c.status))
     .order('updated_at', { ascending: false });
 
-  const jobIds = (jobs ?? []).map((j) => j.id);
-  const { data: kits } = jobIds.length
-    ? await supabase.from('kits').select('job_id, status').in('job_id', jobIds)
-    : { data: [] };
-  const kitStatusByJob = new Map((kits ?? []).map((k) => [k.job_id, k.status]));
+  const kitStatusByJob = new Map(
+    (jobs ?? []).map((j) => [j.id, (j.kits as unknown as Array<{ status: string }> | null)?.[0]?.status])
+  );
 
   type PipelineJob = NonNullable<typeof jobs>[number];
   const byStatus = (jobs ?? []).reduce<Record<string, PipelineJob[]>>((acc, job) => {

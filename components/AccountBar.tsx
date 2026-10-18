@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import ThemeToggle from '@/components/ThemeToggle';
 
 // Shows which account this device is signed in as, with a Sign out button.
 // Everything in Huntboard is stored against the account, so two devices only
@@ -36,6 +37,9 @@ export default function AccountBar({ className = '' }: { className?: string }) {
       >
         {busy ? 'Signing out...' : 'Sign out'}
       </button>
+      <div className="mt-2">
+        <ThemeToggle />
+      </div>
     </div>
   );
 }

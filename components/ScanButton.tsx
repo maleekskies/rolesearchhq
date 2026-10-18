@@ -15,6 +15,7 @@ interface ScanResult {
     lowScore: number;
     excludedCompany: number;
     tooOld: number;
+    duplicate: number;
   };
   sourceErrors: string[];
   dbErrors?: string[];
@@ -73,7 +74,7 @@ export default function ScanButton() {
             <p className="text-muted text-xs mt-1">
               Dropped for you: {result.dropped.language} language, {result.dropped.onsite} on-site/hybrid,{' '}
               {result.dropped.location} region-locked, {result.dropped.dealBreaker} deal-breaker,{' '}
-              {result.dropped.lowScore} below your cutoff.
+              {result.dropped.duplicate} already seen, {result.dropped.lowScore} below your cutoff.
             </p>
           )}
           {result.sourceErrors?.length > 0 && (

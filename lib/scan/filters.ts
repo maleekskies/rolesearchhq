@@ -240,6 +240,37 @@ function mentionsAcceptedPlace(text: string, acceptedPlaces: string[]): boolean 
   return acceptedPlaces.some((p) => p.length >= 3 && text.includes(p));
 }
 
+
+// ------------------------------------------------------------- eligibility
+
+// Requirements that are about who you are or what you hold, not where you
+// sit: clearances, citizenship, a driver's license or own vehicle. Written as
+// demands ("must hold", "requires"), and skipped when negated ("no clearance
+// required").
+const ELIGIBILITY: Array<{ re: RegExp; label: string }> = [
+  { re: /\b(?:(?:active|current|valid)\s+)?(?:security|secret|top[- ]secret|public trust|dod|ts\/sci)\s+clearance\b/g, label: 'security clearance' },
+  { re: /\b(?:u\.?s\.?|us|uk|eu|canadian|australian)\s+citizen(?:s|ship)?\b/g, label: 'citizenship' },
+  { re: /\bcitizenship\s+(?:is\s+)?(?:required|mandatory)\b|\bmust\s+be\s+an?\s+(?:\w+\s+)?citizen\b/g, label: 'citizenship' },
+  { re: /\b(?:valid|full|clean)\s+(?:driver'?s?|driving)\s+licen[cs]e\b/g, label: "driver's license" },
+  { re: /\b(?:own|personal)\s+(?:car|vehicle|transport(?:ation)?)\b/g, label: 'own vehicle' },
+];
+const NEGATION_BEFORE = /\b(?:no|not|without|never|non)\b[^.]{0,25}$/;
+const NICE_NEAR = /\b(?:preferred|a plus|bonus|nice to have|advantage|desirable|not required|optional)\b/;
+
+function eligibilityBlock(text: string): string | null {
+  for (const { re, label } of ELIGIBILITY) {
+    re.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(text)) !== null) {
+      const before = text.slice(Math.max(0, m.index - 30), m.index);
+      const after = text.slice(m.index + m[0].length, m.index + m[0].length + 40);
+      if (!NEGATION_BEFORE.test(before) && !NICE_NEAR.test(after) && !NICE_NEAR.test(before)) return label;
+      if (m[0].length === 0) re.lastIndex++;
+    }
+  }
+  return null;
+}
+
 // ------------------------------------------------------------------- gates
 
 export function evaluateGates(input: GateInput): GateVerdict {
@@ -269,6 +300,10 @@ export function evaluateGates(input: GateInput): GateVerdict {
   }
   const foreign = writtenInOtherLanguage(text, spoken);
   if (foreign) return { exclude: true, reason: 'language', detail: `listing written in ${foreign}`, penalty: 0 };
+
+  // 1b. Requirements about who you are (clearance, citizenship, license, vehicle).
+  const blocked = eligibilityBlock(text);
+  if (blocked) return { exclude: true, reason: 'location', detail: `requires ${blocked}`, penalty: 0 };
 
   // 2. Where the work happens.
   const remoteLoc = /\b(remote|anywhere|worldwide|work from home|wfh|distributed|global)\b/.test(loc);

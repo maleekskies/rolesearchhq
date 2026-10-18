@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
+import { getUserId } from '@/lib/supabase/user';
+import { redirect } from 'next/navigation';
 import SettingsForm from '@/components/SettingsForm';
 import MaintenancePanel from '@/components/MaintenancePanel';
 import DeleteAccount from '@/components/DeleteAccount';
@@ -11,23 +13,23 @@ export const dynamic = 'force-dynamic';
 
 export default async function SettingsPage() {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { data: profile } = await supabase
-    .from('profile')
-    .select('name, email, phone, location, portfolio_url, linkedin_url, work_auth_notes, target_titles, exclude_companies, locations, must_haves, deal_breakers, min_match, languages, seniority, comp_floor, master_cv_text, voice_guide, proof_points, notify_digest')
-    .eq('id', user!.id)
-    .single();
+  const userId = await getUserId(supabase);
+  if (!userId) redirect('/login');
 
   const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
-  const { data: recentRejections } = await supabase
+  const [{ data: profile }, { data: recentRejections }] = await Promise.all([
+    supabase
+    .from('profile')
+    .select('name, email, phone, location, portfolio_url, linkedin_url, work_auth_notes, target_titles, exclude_companies, locations, must_haves, deal_breakers, min_match, languages, seniority, comp_floor, master_cv_text, voice_guide, proof_points, notify_digest')
+    .eq('id', userId)
+    .single(),
+    supabase
     .from('rejections')
     .select('reason, term, created_at')
-    .eq('user_id', user!.id)
+    .eq('user_id', userId)
     .gte('created_at', fourteenDaysAgo)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false }),
+  ]);
 
   return (
     <div className="max-w-2xl px-6 py-10 pb-24 md:pb-10">
@@ -41,7 +43,7 @@ export default async function SettingsPage() {
           Your jobs and progress follow this email to every device. Sign in with the same email on each one.
         </p>
       </div>
-      <SettingsForm profile={profile} userId={user!.id} />
+      <SettingsForm profile={profile} userId={userId as string} />
 
       {recentRejections && recentRejections.length > 0 && (
         <div className="mt-10 pt-8 border-t border-border">

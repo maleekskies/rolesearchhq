@@ -1,223 +1,97 @@
 import { createClient } from '@/lib/supabase/server';
+import { getUserId } from '@/lib/supabase/user';
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
 import type { Metadata } from 'next';
-import JobList from '@/components/JobList';
-import AddJobForm from '@/components/AddJobForm';
-import ScanButton from '@/components/ScanButton';
-import ScoreUrlForm from '@/components/ScoreUrlForm';
+import TodayView, { type TodayJob, type FollowUp, type LastScan } from '@/components/TodayView';
 
-export const metadata: Metadata = { title: 'Inbox' };
+export const metadata: Metadata = { title: 'Today' };
 export const dynamic = 'force-dynamic';
 
-const STALE_DAYS = 30;
+const DAILY_GOAL = 10;
+const COLUMNS =
+  'id, title, company, location, url, description, match_score, match_why, match_gaps, match_checks, posted_at, first_seen_at';
 
-export default async function InboxPage({
-  searchParams,
-}: {
-  searchParams: { first_run?: string; minScore?: string; sort?: string; q?: string };
-}) {
+// Today: a short, finite list of your strongest unreviewed matches. How many
+// you review a day is capped (10, or more if you ask), so there is an end to it.
+// The full searchable list lives at /all.
+export default async function TodayPage({ searchParams }: { searchParams: { extra?: string } }) {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const userId = await getUserId(supabase);
+  if (!userId) redirect('/login');
 
-  const { data: profile } = await supabase
-    .from('profile')
-    .select('onboarded_at, target_titles, locations, must_haves, min_match')
-    .eq('id', user!.id)
-    .maybeSingle();
+  const startOfDay = new Date();
+  startOfDay.setUTCHours(0, 0, 0, 0);
+  const today = new Date().toISOString().slice(0, 10);
+  const extra = Math.min(100, Math.max(0, Number(searchParams.extra) || 0));
+  const goal = DAILY_GOAL + extra;
 
+  // Everything that only needs your id runs at the same time.
+  const [profileRes, reviewedRes, followRes] = await Promise.all([
+    supabase.from('profile').select('onboarded_at, min_match, last_scan').eq('id', userId).maybeSingle(),
+    supabase
+      .from('jobs')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .gte('reviewed_at', startOfDay.toISOString()),
+    supabase
+      .from('jobs')
+      .select('id, title, company, next_date, next_action')
+      .eq('user_id', userId)
+      .eq('status', 'applied')
+      .not('next_date', 'is', null)
+      .lte('next_date', today)
+      .order('next_date', { ascending: true })
+      .limit(3),
+  ]);
+
+  const profile = profileRes.data;
   if (!profile?.onboarded_at) redirect('/onboarding');
+  const minMatch: number = profile.min_match ?? 70;
 
-  // Auto-archive listings nobody touched in 30 days, so the board doesn't
-  // just grow forever. Only ever touches unreviewed 'new' jobs, never
-  // anything already saved or in motion.
-  const staleCutoff = new Date(Date.now() - STALE_DAYS * 24 * 60 * 60 * 1000).toISOString();
-  await supabase
-    .from('jobs')
-    .update({ status: 'ignored', updated_at: new Date().toISOString() })
-    .eq('user_id', user!.id)
-    .eq('status', 'new')
-    .lt('updated_at', staleCutoff);
+  const freshBase = () =>
+    supabase
+      .from('jobs')
+      .select(COLUMNS, { count: 'exact' })
+      .eq('user_id', userId)
+      .eq('status', 'new')
+      .gte('match_score', minMatch);
 
-  const minMatch = profile.min_match ?? 70;
-  // The Inbox opens at your cutoff. "Show everything" passes minScore=0.
-  const parsedMin = searchParams.minScore !== undefined ? Number(searchParams.minScore) : minMatch;
-  const activeMinScore = Number.isFinite(parsedMin) ? parsedMin : minMatch;
-  const sort = searchParams.sort === 'score' ? 'score' : 'recent';
-  const query = searchParams.q?.trim();
+  const reviewedToday = reviewedRes.count ?? 0;
+  const slots = Math.max(0, goal - reviewedToday);
 
-  let jobsQuery = supabase.from('jobs').select('*').eq('user_id', user!.id);
+  const queueRes = slots
+    ? await freshBase()
+        .order('match_score', { ascending: false, nullsFirst: false })
+        .order('first_seen_at', { ascending: false })
+        .limit(slots)
+    : { data: [], count: (await freshBase().limit(1)).count ?? 0 };
 
-  if (query) {
-    jobsQuery = jobsQuery.or(`title.ilike.%${query}%,company.ilike.%${query}%`);
-  }
+  const jobs: TodayJob[] = (queueRes.data ?? []).map((j: any) => ({
+    id: j.id,
+    title: j.title,
+    company: j.company,
+    location: j.location,
+    url: j.url,
+    score: j.match_score ?? 0,
+    checks: j.match_checks?.length ? j.match_checks : j.match_why ?? [],
+    gaps: j.match_gaps ?? [],
+    // Only a short excerpt is sent to the browser, not the whole description.
+    excerpt: (j.description ?? '').replace(/\s+/g, ' ').trim().slice(0, 480),
+    postedAt: j.posted_at ?? j.first_seen_at,
+  }));
 
-  if (sort === 'score') {
-    jobsQuery = jobsQuery
-      .order('match_score', { ascending: false, nullsFirst: false })
-      .order('first_seen_at', { ascending: false })
-      .order('id', { ascending: false });
-  } else {
-    jobsQuery = jobsQuery.order('first_seen_at', { ascending: false }).order('id', { ascending: false });
-  }
-
-  const { data: jobs } = await jobsQuery;
-
-  const all = jobs ?? [];
-  // The cutoff only hides listings you haven't touched. Anything you saved,
-  // applied to or are interviewing for stays visible whatever its score.
-  const visible = all.filter((j) => j.status !== 'new' || (j.match_score ?? 0) >= activeMinScore);
-  const newCount = visible.filter((j) => j.status === 'new').length;
-  const readyToReview = all.filter((j) => j.status === 'kit_ready');
-  const inPipeline = all.filter((j) =>
-    ['saved', 'kit_ready', 'applied', 'interview'].includes(j.status)
-  ).length;
-  const avgMatch = visible.length
-    ? Math.round(visible.reduce((sum, j) => sum + (j.match_score ?? 0), 0) / visible.length)
-    : null;
-
-  function sortLink(target: string) {
-    const params = new URLSearchParams();
-    if (query) params.set('q', query);
-    if (activeMinScore !== minMatch) params.set('minScore', String(activeMinScore));
-    params.set('sort', target);
-    return `/?${params.toString()}`;
-  }
+  const waiting = Math.max(0, (queueRes.count ?? 0) - jobs.length);
 
   return (
-    <div className="px-6 py-10 pb-24 md:pb-10">
-      {searchParams.first_run && (
-        <div className="bg-accent/10 border border-accent/30 rounded-lg px-4 py-3 mb-6 text-sm text-text">
-          These are scored against the profile you just wrote. Open one to see why.
-        </div>
-      )}
-
-      <div className="mb-6">
-        <h1 className="font-display text-3xl text-text mb-1">Inbox</h1>
-        <p className="text-muted">
-          {all.length
-            ? activeMinScore > 0
-              ? `${visible.length} roles at or above ${activeMinScore} match.`
-              : `${visible.length} roles, ${sort === 'score' ? 'highest match first' : 'newest first'}.`
-            : 'Nothing here yet.'}
-        </p>
-      </div>
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <Stat label="New matches" value={newCount} />
-        <Stat label="Ready to review" value={readyToReview.length} />
-        <Stat label="In pipeline" value={inPipeline} />
-        <Stat label="Avg match" value={avgMatch ?? 'n/a'} sub={`cutoff ${minMatch}`} />
-      </div>
-
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <ScanButton />
-        <AddJobForm />
-      </div>
-
-      <div className="mb-4">
-        <ScoreUrlForm />
-      </div>
-
-      <form className="mb-4" action="/" method="get">
-        {sort !== 'recent' && <input type="hidden" name="sort" value={sort} />}
-        <input
-          type="text"
-          name="q"
-          defaultValue={query ?? ''}
-          placeholder="Search by title or company"
-          className="w-full sm:w-80 bg-surface border border-border rounded px-3 py-2 text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent"
-        />
-      </form>
-
-      <div className="flex items-center gap-4 mb-4 text-xs">
-        <div className="flex items-center gap-2 text-muted">
-          <span>Sort:</span>
-          <Link href={sortLink('recent')} className={sort === 'recent' ? 'text-text font-medium' : 'hover:text-text'}>
-            Recent
-          </Link>
-          <span>·</span>
-          <Link href={sortLink('score')} className={sort === 'score' ? 'text-text font-medium' : 'hover:text-text'}>
-            Score, highest first
-          </Link>
-        </div>
-        {activeMinScore > 0 ? (
-          <div className="text-muted">
-            <span>Showing {activeMinScore}+ only.</span>{' '}
-            <Link href="/?minScore=0" className="text-accent hover:underline">
-              Show everything
-            </Link>
-          </div>
-        ) : (
-          <div className="text-muted">
-            <Link href={`/?minScore=${minMatch}`} className="text-accent hover:underline">
-              Only show {minMatch}+ match
-            </Link>
-          </div>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-6 items-start">
-        <JobList jobs={visible} />
-
-        <div className="flex flex-col gap-4">
-          <div className="bg-surface border border-border rounded-lg p-4">
-            <h2 className="text-sm font-medium text-text mb-3">Review queue</h2>
-            {readyToReview.length === 0 ? (
-              <p className="text-xs text-muted">No kits waiting on you right now.</p>
-            ) : (
-              <ul className="flex flex-col gap-2">
-                {readyToReview.slice(0, 3).map((job) => (
-                  <li key={job.id}>
-                    <Link href={`/kit-studio?job=${job.id}`} className="text-sm text-text hover:text-accent block truncate">
-                      {job.title} <span className="text-muted">· {job.company}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          <div className="bg-surface border border-border rounded-lg p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-medium text-text">Targeting</h2>
-              <Link href="/settings" className="text-xs text-accent hover:underline">
-                Edit
-              </Link>
-            </div>
-            <dl className="flex flex-col gap-2 text-xs">
-              <SnapshotRow label="Titles" values={profile.target_titles} />
-              <SnapshotRow label="Locations" values={profile.locations} />
-              <SnapshotRow label="Must-haves" values={profile.must_haves} />
-              <div>
-                <dt className="text-muted mb-0.5">Min match</dt>
-                <dd className="text-text">{minMatch}</dd>
-              </div>
-            </dl>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Stat({ label, value, sub }: { label: string; value: number | string; sub?: string }) {
-  return (
-    <div className="bg-surface border border-border rounded-lg px-4 py-3">
-      <p className="text-2xl font-display font-bold grad-text tabular-nums">{value}</p>
-      <p className="text-xs text-muted">{label}</p>
-      {sub && <p className="text-xs text-muted mt-0.5">{sub}</p>}
-    </div>
-  );
-}
-
-function SnapshotRow({ label, values }: { label: string; values: string[] | null }) {
-  return (
-    <div>
-      <dt className="text-muted mb-0.5">{label}</dt>
-      <dd className="text-text">{values && values.length > 0 ? values.join(', ') : 'Not set'}</dd>
-    </div>
+    <TodayView
+      jobs={jobs}
+      reviewedToday={reviewedToday}
+      goal={goal}
+      extra={extra}
+      waiting={waiting}
+      minMatch={minMatch}
+      followUps={(followRes.data ?? []) as FollowUp[]}
+      lastScan={(profile.last_scan ?? null) as LastScan | null}
+    />
   );
 }

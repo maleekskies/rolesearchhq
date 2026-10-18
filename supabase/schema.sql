@@ -169,3 +169,9 @@ end;
 $$;
 revoke all on function public.bump_usage(text, int) from public, anon;
 grant execute on function public.bump_usage(text, int) to authenticated;
+
+-- Today screen: plain-language reasons, review timestamp, last scan summary.
+alter table jobs add column if not exists match_checks text[];
+alter table jobs add column if not exists reviewed_at timestamptz;
+create index if not exists jobs_user_reviewed_idx on jobs (user_id, reviewed_at desc);
+alter table profile add column if not exists last_scan jsonb;

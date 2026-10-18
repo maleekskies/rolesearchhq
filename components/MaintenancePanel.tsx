@@ -17,15 +17,35 @@ export default function MaintenancePanel() {
   async function handleRescore() {
     setRescoring(true);
     setRescoreResult(null);
+    let after: string | undefined;
+    let rescored = 0;
+    let excluded = 0;
+    let duplicates = 0;
     try {
-      const res = await fetch('/api/jobs/rescore-all', { method: 'POST' });
-      const data = await res.json();
-      if (!res.ok) {
-        setRescoreResult(data.error ?? `Rescore failed (${res.status}).`);
-      } else {
-        setRescoreResult(`Rescored ${data.rescored}. ${data.excluded} moved to rejected on deal-breakers.`);
-        router.refresh();
+      // The server does a page at a time; keep asking until it says done.
+      for (let page = 0; page < 500; page++) {
+        const res = await fetch('/api/jobs/rescore-all', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ after }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setRescoreResult(data.error ?? `Rescore failed (${res.status}).`);
+          setRescoring(false);
+          return;
+        }
+        rescored += data.rescored ?? 0;
+        excluded += data.excluded ?? 0;
+        duplicates += data.duplicates ?? 0;
+        setRescoreResult(`Working... ${rescored} rescored so far.`);
+        if (data.done || !data.next) break;
+        after = data.next;
       }
+      setRescoreResult(
+        `Rescored ${rescored}. ${excluded} moved to rejected (language, on-site, region or deal-breaker). ${duplicates} duplicates hidden.`
+      );
+      router.refresh();
     } catch (err) {
       setRescoreResult(err instanceof Error ? err.message : 'Rescore failed to complete.');
     }

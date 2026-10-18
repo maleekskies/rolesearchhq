@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getSharedSources, type NormalizedJob, type ScanSourceResult } from '@/lib/scan/sources';
 import { computeMatch, isExcludedCompany, applyTeachingPenalty, type RecentRejection } from '@/lib/scan/score';
-import { makeFingerprint } from '@/lib/scan/fingerprint';
+import { makeFingerprint, makeLegacyFingerprint } from '@/lib/scan/fingerprint';
 
 const MAX_JOBS_PER_SCAN = 100;
 const MAX_LISTING_AGE_DAYS = 7;
@@ -19,6 +19,7 @@ type ScoredJob = NormalizedJob & {
   match_why: string;
   fit_tags: string[];
   gap_tags: string[];
+  match_checks: string[];
   domain_score: number;
   skills_score: number;
   seniority_score: number;
@@ -33,6 +34,7 @@ export interface DropCounts {
   lowScore: number;
   excludedCompany: number;
   tooOld: number;
+  duplicate: number;
 }
 
 export interface ScanResult {
@@ -98,6 +100,17 @@ export async function runScanForUser(
     };
   }
 
+  // Auto-archive listings nobody touched in 30 days so the Inbox doesn't just
+  // grow forever. This used to run as a database write on every Inbox visit;
+  // it now runs here, once per scan. Only ever touches unreviewed 'new' jobs.
+  const staleCutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  await supabase
+    .from('jobs')
+    .update({ status: 'ignored', updated_at: new Date().toISOString() })
+    .eq('user_id', userId)
+    .eq('status', 'new')
+    .lt('updated_at', staleCutoff);
+
   const { data: recentRejections } = await supabase
     .from('rejections')
     .select('reason, term, created_at')
@@ -118,6 +131,7 @@ export async function runScanForUser(
     lowScore: 0,
     excludedCompany: 0,
     tooOld: 0,
+    duplicate: 0,
   };
 
   const scoredWithDupes: ScoredJob[] = [];
@@ -163,6 +177,7 @@ export async function runScanForUser(
       match_why: match.why,
       fit_tags: match.fitTags,
       gap_tags: match.gapTags,
+      match_checks: match.checks,
       domain_score: match.domainScore,
       skills_score: match.skillsScore,
       seniority_score: match.seniorityScore,
@@ -181,11 +196,21 @@ export async function runScanForUser(
     if (!existing || j.match_score > existing.match_score) seen.set(key, j);
   }
 
-  const scored = Array.from(seen.values())
-    .sort((a, b) => b.match_score - a.match_score)
-    .slice(0, MAX_JOBS_PER_SCAN);
+  // Same job from two boards (or a repost) in this very scan: keep the best
+  // scoring copy only.
+  const byPrint = new Map<string, ScoredJob>();
+  for (const j of Array.from(seen.values()).sort((x, y) => y.match_score - x.match_score)) {
+    const fp = makeFingerprint(j.title, j.company);
+    if (byPrint.has(fp)) dropped.duplicate += 1;
+    else byPrint.set(fp, j);
+  }
+  const scored = Array.from(byPrint.values()).slice(0, MAX_JOBS_PER_SCAN);
 
   if (scored.length === 0) {
+    await supabase
+      .from('profile')
+      .update({ last_scan: { at: new Date().toISOString(), inserted: 0, minMatch, dropped } })
+      .eq('id', userId);
     return {
       found: 0,
       inserted: 0,
@@ -193,27 +218,69 @@ export async function runScanForUser(
       sourceErrors,
       dbErrors,
       dropped,
-      message: `No jobs at or above your ${minMatch} cutoff this scan.`,
+      message: `No new jobs at or above your ${minMatch} cutoff this scan.`,
     };
   }
 
-  // Find which of these already exist so we don't clobber their status.
-  const { data: existing } = await supabase
-    .from('jobs')
-    .select('id, source, source_id')
-    .eq('user_id', userId)
-    .in(
-      'source_id',
-      scored.map((j) => j.source_id)
-    );
+  // Lookups are chunked: putting thousands of ids in one request overflows the
+  // URL limit, the lookup silently returns nothing, and every job then looks new.
+  // Remember what this scan dropped so the Today screen can show it.
+  const saveLastScan = async (inserted: number) => {
+    await supabase
+      .from('profile')
+      .update({ last_scan: { at: new Date().toISOString(), inserted, minMatch, dropped } })
+      .eq('id', userId);
+  };
 
-  const existingKey = new Set((existing ?? []).map((e) => `${e.source}:${e.source_id}`));
-  const existingIdByKey = new Map(
-    (existing ?? []).map((e) => [`${e.source}:${e.source_id}`, e.id])
+  const chunk = <T,>(arr: T[], n: number): T[][] => {
+    const out: T[][] = [];
+    for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n));
+    return out;
+  };
+
+  const existing: { id: string; source: string; source_id: string }[] = [];
+  for (const ids of chunk(scored.map((j) => j.source_id), 100)) {
+    const { data, error } = await supabase
+      .from('jobs')
+      .select('id, source, source_id')
+      .eq('user_id', userId)
+      .in('source_id', ids);
+    if (error) {
+      // Stop rather than insert blind and create duplicates.
+      return { found: 0, inserted: 0, updated: 0, dropped, sourceErrors, dbErrors: [`lookup: ${error.message}`] };
+    }
+    existing.push(...(data ?? []));
+  }
+
+  // Every fingerprint already on file for this user, in ANY status.
+  const wanted = Array.from(
+    new Set(scored.flatMap((j) => [makeFingerprint(j.title, j.company), makeLegacyFingerprint(j.title, j.company)]))
   );
+  const knownPrints = new Set<string>();
+  for (const prints of chunk(wanted, 80)) {
+    const { data, error } = await supabase
+      .from('jobs')
+      .select('fingerprint')
+      .eq('user_id', userId)
+      .in('fingerprint', prints);
+    if (error) {
+      return { found: 0, inserted: 0, updated: 0, dropped, sourceErrors, dbErrors: [`lookup: ${error.message}`] };
+    }
+    for (const row of data ?? []) if (row.fingerprint) knownPrints.add(row.fingerprint);
+  }
 
-  const toInsert = scored.filter((j) => !existingKey.has(`${j.source}:${j.source_id}`));
+  const existingKey = new Set(existing.map((e) => `${e.source}:${e.source_id}`));
+  const existingIdByKey = new Map(existing.map((e) => [`${e.source}:${e.source_id}`, e.id]));
+
   const toUpdate = scored.filter((j) => existingKey.has(`${j.source}:${j.source_id}`));
+  const toInsert = scored.filter((j) => {
+    if (existingKey.has(`${j.source}:${j.source_id}`)) return false;
+    const seenBefore =
+      knownPrints.has(makeFingerprint(j.title, j.company)) ||
+      knownPrints.has(makeLegacyFingerprint(j.title, j.company));
+    if (seenBefore) dropped.duplicate += 1;
+    return !seenBefore;
+  });
 
   let inserted = 0;
   let updated = 0;
@@ -233,6 +300,7 @@ export async function runScanForUser(
       match_score: j.match_score,
       match_why: [j.match_why],
       fit_tags: j.fit_tags,
+      match_checks: j.match_checks,
       match_gaps: j.gap_tags,
       domain_score: j.domain_score,
       skills_score: j.skills_score,
@@ -265,6 +333,7 @@ export async function runScanForUser(
             match_score: j.match_score,
             match_why: [j.match_why],
             fit_tags: j.fit_tags,
+            match_checks: j.match_checks,
             match_gaps: j.gap_tags,
             domain_score: j.domain_score,
             skills_score: j.skills_score,
@@ -285,5 +354,6 @@ export async function runScanForUser(
     }
   }
 
+  await saveLastScan(inserted);
   return { found: scored.length, inserted, updated, dropped, sourceErrors, dbErrors };
 }
