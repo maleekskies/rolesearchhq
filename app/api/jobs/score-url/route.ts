@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     // safeFetchText refuses private/internal addresses, odd ports and huge pages.
     const res = await safeFetchText(url, {
       timeoutMs: TIMEOUT_MS,
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Huntboard job scanner)' },
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; RoleSearchHQ job scanner)' },
     });
     if (!res.ok) {
       return NextResponse.json({ error: `Couldn't fetch that URL (${res.status}).` }, { status: 422 });

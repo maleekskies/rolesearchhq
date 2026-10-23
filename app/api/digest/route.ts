@@ -6,7 +6,7 @@ import { checkCronAuth } from '@/lib/cron-auth';
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
-const FROM = process.env.RESEND_FROM || 'Huntboard <onboarding@resend.dev>';
+const FROM = process.env.RESEND_FROM || 'RoleSearchHQ <onboarding@resend.dev>';
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 // GET /api/digest
@@ -77,7 +77,7 @@ export async function GET(request: Request) {
         body: JSON.stringify({
           from: FROM,
           to: profile.email,
-          subject: `${jobs.length} new match${jobs.length > 1 ? 'es' : ''} on Huntboard`,
+          subject: `${jobs.length} new match${jobs.length > 1 ? 'es' : ''} on RoleSearchHQ`,
           html,
         }),
       });

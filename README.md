@@ -1,12 +1,12 @@
-# Huntboard
+# RoleSearchHQ
 
 A personal job-search desk. Paste your CV and target titles, scan free job
-boards or paste a specific listing, and Huntboard scores each role against
+boards or paste a specific listing, and RoleSearchHQ scores each role against
 your profile with a plain-language reason. Approve a kit (tailored CV, cover
 letter, talking points) before you apply. Nothing sends on its own; every
 application goes out through you, on the real job posting's own site.
 
-Live at: https://huntboard-nu.vercel.app
+Live at: https://rolesearchhq.vercel.app
 
 ## What it actually does
 
@@ -112,8 +112,8 @@ actually needs to be set this time, not left optional.
 
 Vercel's Hobby plan caps cron at once a day, so scanning is triggered from outside:
 
-- **GitHub Actions** (`.github/workflows/scan.yml`, default): calls `/api/cron/scan` page by page (25 users per call) until every user is scanned. Set the repo secret `CRON_SECRET` to the same value as on Vercel. GitHub pauses scheduled workflows after 60 days with no repo activity, so for a public product prefer the option below.
-- **Supabase pg_cron** (`supabase/cron.sql`): runs inside your database, independent of the repo. Run it yourself in the SQL editor with your URL and secret filled in.
+- **Supabase pg_cron** (`supabase/cron.sql`, active): runs inside the database three times a day, independent of the repo. The jobs are named `rolesearchhq-scan-*`; update them if `CRON_SECRET` changes.
+- **GitHub Actions** (`.github/workflows/scan.yml`, manual fallback): calls `/api/cron/scan` page by page (25 users per call) until every user is scanned. It is set to `workflow_dispatch` only so it does not duplicate the Supabase schedule. Set the repo secret `CRON_SECRET` to the same value as on Vercel if you use it.
 
 The job boards are downloaded once per call and shared by every user in the batch, so cost does not grow per user.
 

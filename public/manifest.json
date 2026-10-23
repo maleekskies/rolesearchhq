@@ -1,6 +1,6 @@
 {
-  "name": "Huntboard",
-  "short_name": "Huntboard",
+  "name": "RoleSearchHQ",
+  "short_name": "RoleSearchHQ",
   "description": "Your job search, reviewed before it sends.",
   "start_url": "/",
   "display": "standalone",

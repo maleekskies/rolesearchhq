@@ -1,8 +1,8 @@
 // Some boards ask API clients to identify themselves. The contact address comes
 // from the environment so it isn't hard-coded in a public repo.
 const USER_AGENT = process.env.NEXT_PUBLIC_CONTACT_EMAIL
-  ? `Huntboard job scanner (contact: ${process.env.NEXT_PUBLIC_CONTACT_EMAIL})`
-  : 'Huntboard job scanner';
+  ? `RoleSearchHQ job scanner (contact: ${process.env.NEXT_PUBLIC_CONTACT_EMAIL})`
+  : 'RoleSearchHQ job scanner';
 
 // Fetchers for the free, no-key job board APIs from the handoff doc.
 // Each one is wrapped so a single source failing (timeout, schema change,

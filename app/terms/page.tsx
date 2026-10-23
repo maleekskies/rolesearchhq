@@ -11,17 +11,17 @@ export default function TermsPage() {
   return (
     <main className="min-h-screen bg-bg px-6 py-12">
       <article className="max-w-2xl mx-auto text-sm text-muted leading-relaxed">
-        <Link href="/" className="text-accent text-xs">← Back to Huntboard</Link>
+        <Link href="/" className="text-accent text-xs">← Back to RoleSearchHQ</Link>
         <h1 className="font-display text-3xl text-text mt-4 mb-1">Terms of Use</h1>
         <p className="mb-8">Last updated: October 14, 2026</p>
 
         <Section title="The service">
-          Huntboard scores public job listings against the profile you provide and helps you draft application
+          RoleSearchHQ scores public job listings against the profile you provide and helps you draft application
           material. It is provided free, as is, and may change or stop at any time.
         </Section>
 
         <Section title="You stay in control">
-          Nothing is ever sent to an employer by Huntboard. You review everything and apply yourself, on the
+          Nothing is ever sent to an employer by RoleSearchHQ. You review everything and apply yourself, on the
           employer's own site. AI-generated CVs, cover letters and talking points can contain mistakes: check
           every claim against your real experience before you use it. You are responsible for what you submit.
         </Section>

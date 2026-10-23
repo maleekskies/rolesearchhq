@@ -28,9 +28,14 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAuthRoute = request.nextUrl.pathname.startsWith('/login');
+  // These routes must work before a session exists: the auth callback is the
+  // password-reset landing page, and the legal pages are linked from sign-in.
+  const publicPaths = ['/login', '/auth/callback', '/privacy', '/terms'];
+  const isPublicRoute = publicPaths.some(
+    (path) => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(`${path}/`)
+  );
 
-  if (!user && !isAuthRoute) {
+  if (!user && !isPublicRoute) {
     const redirectUrl = new URL('/login', request.url);
     return NextResponse.redirect(redirectUrl);
   }

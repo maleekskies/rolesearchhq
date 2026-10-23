@@ -56,7 +56,7 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center bg-bg px-6 py-16">
       <div className="w-full max-w-md">
-        <h1 className="font-display text-4xl grad-text mb-3">Huntboard</h1>
+        <h1 className="font-display text-4xl grad-text mb-3">RoleSearchHQ</h1>
         <p className="text-text text-lg mb-1">Roles scored against your profile.</p>
         <p className="text-muted mb-8">Nothing sends until you say so.</p>
 

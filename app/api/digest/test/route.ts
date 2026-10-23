@@ -48,9 +48,9 @@ export async function POST() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: process.env.RESEND_FROM || 'Huntboard <onboarding@resend.dev>',
+        from: process.env.RESEND_FROM || 'RoleSearchHQ <onboarding@resend.dev>',
         to: profile.email,
-        subject: 'Huntboard test digest',
+        subject: 'RoleSearchHQ test digest',
         html,
       }),
     });

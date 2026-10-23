@@ -26,7 +26,7 @@ export default function Sidebar() {
     <>
       {/* Desktop: left rail, no border box, active item marked by a gradient bar */}
       <nav className="hidden md:flex flex-col w-56 shrink-0 px-4 py-6 gap-1">
-        <div className="font-display font-bold text-xl grad-text mb-8 px-2">Huntboard</div>
+        <div className="font-display font-bold text-xl grad-text mb-8 px-2">RoleSearchHQ</div>
         {NAV_ITEMS.map((item) => {
           const active = (pending ?? pathname) === item.href;
           return (

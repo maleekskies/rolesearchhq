@@ -9,8 +9,8 @@ const sans = Instrument_Sans({ subsets: ['latin'], variable: '--font-sans', disp
 const themeScript = "try{var t=localStorage.getItem('hb-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}";
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://huntboard-nu.vercel.app'),
-  title: { default: 'Huntboard', template: '%s, Huntboard' },
+  metadataBase: new URL('https://rolesearchhq.vercel.app'),
+  title: { default: 'RoleSearchHQ', template: '%s, RoleSearchHQ' },
   description: 'Your job search, reviewed before it sends.',
   manifest: '/manifest.json',
   icons: { icon: '/icon.svg' },

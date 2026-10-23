@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import ThemeToggle from '@/components/ThemeToggle';
 
 // Shows which account this device is signed in as, with a Sign out button.
-// Everything in Huntboard is stored against the account, so two devices only
+// Everything in RoleSearchHQ is stored against the account, so two devices only
 // show the same jobs and progress if they are signed in as the SAME email.
 export default function AccountBar({ className = '' }: { className?: string }) {
   const [email, setEmail] = useState<string | null>(null);

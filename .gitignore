@@ -1,0 +1,24 @@
+# dependencies
+node_modules
+.pnp
+.pnp.js
+
+# next.js
+.next
+out
+
+# env files (never commit secrets)
+.env
+.env.*
+!.env.example
+
+# local files that hold personal data
+profile.md
+cv.pdf
+*.pdf
+
+# misc
+.DS_Store
+*.log
+.vercel
+*.tsbuildinfo

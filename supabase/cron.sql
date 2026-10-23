@@ -7,14 +7,14 @@
 --      create extension if not exists pg_net;
 -- 2. Replace YOUR_APP_URL and YOUR_CRON_SECRET below, then run this file.
 --    (Run it yourself in the SQL editor so the secret never leaves your hands.)
--- 3. In GitHub, delete .github/workflows/scan.yml so scans don't run twice.
+-- 3. The GitHub workflow is manual-only, so it will not run twice.
 --
 -- This calls the first page only (25 users). Once you have more than 25
 -- users, use the GitHub workflow (which pages through everyone) or add one
 -- job per page by changing offset below (0, 25, 50, ...).
 
 select cron.schedule(
-  'huntboard-scan-0600',
+  'rolesearchhq-scan-0600',
   '0 6 * * *',
   $$ select net.http_get(
        url := 'YOUR_APP_URL/api/cron/scan?offset=0&limit=25',
@@ -22,5 +22,5 @@ select cron.schedule(
        timeout_milliseconds := 60000
      ); $$
 );
-select cron.schedule('huntboard-scan-1300', '0 13 * * *', $$ select net.http_get(url := 'YOUR_APP_URL/api/cron/scan?offset=0&limit=25', headers := jsonb_build_object('Authorization', 'Bearer YOUR_CRON_SECRET'), timeout_milliseconds := 60000); $$);
-select cron.schedule('huntboard-scan-2000', '0 20 * * *', $$ select net.http_get(url := 'YOUR_APP_URL/api/cron/scan?offset=0&limit=25', headers := jsonb_build_object('Authorization', 'Bearer YOUR_CRON_SECRET'), timeout_milliseconds := 60000); $$);
+select cron.schedule('rolesearchhq-scan-1300', '0 13 * * *', $$ select net.http_get(url := 'YOUR_APP_URL/api/cron/scan?offset=0&limit=25', headers := jsonb_build_object('Authorization', 'Bearer YOUR_CRON_SECRET'), timeout_milliseconds := 60000); $$);
+select cron.schedule('rolesearchhq-scan-2000', '0 20 * * *', $$ select net.http_get(url := 'YOUR_APP_URL/api/cron/scan?offset=0&limit=25', headers := jsonb_build_object('Authorization', 'Bearer YOUR_CRON_SECRET'), timeout_milliseconds := 60000); $$);

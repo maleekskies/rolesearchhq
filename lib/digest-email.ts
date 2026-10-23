@@ -1,4 +1,4 @@
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://huntboard-nu.vercel.app';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://rolesearchhq.vercel.app';
 
 // Titles and company names come from third-party job boards, so they are
 // untrusted text and must not be dropped into the email as raw HTML.
@@ -26,7 +26,7 @@ export function buildDigestEmailHtml(
     <div style="font-family:sans-serif;max-width:480px">
       <h2>${count ? `${count} match${count > 1 ? 'es' : ''} above your cutoff` : 'No matches above your cutoff right now'}</h2>
       ${count ? `<table style="width:100%;border-collapse:collapse">${rows}</table>` : ''}
-      <p><a href="${APP_URL}">Open Huntboard</a></p>
+      <p><a href="${APP_URL}">Open RoleSearchHQ</a></p>
       <p style="color:#888;font-size:12px">You get this because the daily digest is on. Turn it off any time in <a href="${APP_URL}/settings">Settings</a>.</p>
       ${footerNote ? `<p style="color:#888;font-size:12px">${footerNote}</p>` : ''}
     </div>

@@ -32,7 +32,7 @@ export default async function KitStudioPage({
 
         {!recentKits || recentKits.length === 0 ? (
           <p className="text-muted text-sm border border-dashed border-border rounded-lg p-6 text-center">
-            Pick a match from Inbox. Huntboard will draft a kit for that role only.
+            Pick a match from Inbox. RoleSearchHQ will draft a kit for that role only.
           </p>
         ) : (
           <ul className="flex flex-col gap-2">

@@ -13,12 +13,12 @@ export default function PrivacyPage() {
   return (
     <main className="min-h-screen bg-bg px-6 py-12">
       <article className="max-w-2xl mx-auto text-sm text-muted leading-relaxed">
-        <Link href="/" className="text-accent text-xs">← Back to Huntboard</Link>
+        <Link href="/" className="text-accent text-xs">← Back to RoleSearchHQ</Link>
         <h1 className="font-display text-3xl text-text mt-4 mb-1">Privacy Policy</h1>
         <p className="mb-8">Last updated: October 14, 2026</p>
 
-        <Section title="What Huntboard is">
-          Huntboard is a personal job-search tool. It scores public job listings against the profile you
+        <Section title="What RoleSearchHQ is">
+          RoleSearchHQ is a personal job-search tool. It scores public job listings against the profile you
           enter and helps you prepare application material. It never applies to anything on your behalf.
         </Section>
 

@@ -1,0 +1,28 @@
+name: Scan job boards
+
+on:
+  # Scheduled scans run from Supabase pg_cron (see supabase/cron.sql) so they
+  # do not depend on this repository. Keep this workflow manual-only to avoid
+  # running every scan twice.
+  workflow_dispatch: {}
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      # Walks through users in pages until the endpoint says it is done.
+      - name: Call the scan endpoint until every user is scanned
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          APP_URL: ${{ vars.APP_URL || 'https://rolesearchhq.vercel.app' }}
+        run: |
+          offset=0
+          for i in $(seq 1 200); do
+            body=$(curl -sf --max-time 90 "$APP_URL/api/cron/scan?offset=$offset&limit=25" \
+              -H "Authorization: Bearer $CRON_SECRET") || { echo "Scan call failed at offset $offset"; exit 1; }
+            echo "$body"
+            done_flag=$(echo "$body" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("done"))')
+            if [ "$done_flag" = "True" ]; then exit 0; fi
+            offset=$(echo "$body" | python3 -c 'import sys,json; print(json.load(sys.stdin)["nextOffset"])')
+          done
+          echo "Stopped after 200 pages"; exit 1

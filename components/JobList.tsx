@@ -6,6 +6,26 @@ import Link from 'next/link';
 import type { Job } from '@/lib/types';
 import { relativeAge } from '@/lib/format';
 
+// The list only needs a slice of a job row. Typing it this way lets the All
+// matches page pass its lighter SELECT result without loading every column.
+export type JobListItem = Pick<
+  Job,
+  | 'id'
+  | 'title'
+  | 'company'
+  | 'location'
+  | 'match_score'
+  | 'match_why'
+  | 'fit_tags'
+  | 'match_gaps'
+  | 'domain_score'
+  | 'skills_score'
+  | 'seniority_score'
+  | 'location_score'
+  | 'posted_at'
+  | 'fingerprint'
+>;
+
 function scoreClass(score: number | null): string {
   if (score === null) return 'text-muted';
   if (score >= 85) return 'text-good';
@@ -20,7 +40,7 @@ function companyMark(company: string): string {
   return (words[0][0] + words[1][0]).toUpperCase();
 }
 
-export default function JobList({ jobs }: { jobs: Job[] }) {
+export default function JobList({ jobs }: { jobs: JobListItem[] }) {
   const router = useRouter();
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -78,7 +98,7 @@ export default function JobList({ jobs }: { jobs: Job[] }) {
   if (jobs.length === 0) {
     return (
       <p className="text-muted text-sm py-8 text-center border border-dashed border-border rounded-lg">
-        No matches yet. Huntboard scores roles against your titles and must-haves. Add a source or
+        No matches yet. RoleSearchHQ scores roles against your titles and must-haves. Add a source or
         wait for the next scan.
       </p>
     );
