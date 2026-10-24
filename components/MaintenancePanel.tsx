@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-export default function MaintenancePanel() {
+export default function MaintenancePanel({ digestAvailable }: { digestAvailable: boolean }) {
   const router = useRouter();
   const [rescoring, setRescoring] = useState(false);
   const [rescoreResult, setRescoreResult] = useState<string | null>(null);
@@ -163,17 +163,25 @@ export default function MaintenancePanel() {
         </div>
 
         <div className="rounded-2xl bg-black/15 p-4" style={{ boxShadow: 'inset 0 0 0 1px rgb(var(--c-border))' }}>
-          <h3 className="text-[14px] font-semibold text-text">Test the daily digest</h3>
+          <h3 className="flex flex-wrap items-center gap-2 text-[14px] font-semibold text-text">
+            Test the daily digest
+            {!digestAvailable && (
+              <span className="rounded-full bg-warnBg px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-[0.12em] text-warnInk ring-1 ring-inset ring-warnLine/50">
+                Paused
+              </span>
+            )}
+          </h3>
           <p className="mt-1.5 text-[12px] leading-relaxed text-muted">
-            Sends one digest to your email right now, regardless of the toggle above. Needs RESEND_API_KEY set on
-            the server.
+            {digestAvailable
+              ? 'Sends one digest to your email right now, regardless of the toggle above. Needs RESEND_API_KEY set on the server.'
+              : 'Held until RoleSearchHQ has a verified Resend sending domain. Other recipients will not be emailed.'}
           </p>
           <button
             onClick={handleTestDigest}
-            disabled={testingDigest}
+            disabled={testingDigest || !digestAvailable}
             className="btn btn-ghost btn-sm mt-3 disabled:opacity-50"
           >
-            {testingDigest ? 'Sending…' : 'Send test digest'}
+            {testingDigest ? 'Sending…' : digestAvailable ? 'Send test digest' : 'Digest paused'}
           </button>
           {digestResult && <p className="mt-2 text-[11.5px] leading-relaxed text-muted">{digestResult}</p>}
         </div>

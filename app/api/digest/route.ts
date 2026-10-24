@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { buildDigestEmailHtml } from '@/lib/digest-email';
 import { checkCronAuth } from '@/lib/cron-auth';
+import { canSendDigestTo, DIGEST_FROM } from '@/lib/digest-config';
 
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
-const FROM = process.env.RESEND_FROM || 'RoleSearchHQ <onboarding@resend.dev>';
+const FROM = DIGEST_FROM;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 // GET /api/digest
@@ -45,10 +46,15 @@ export async function GET(request: Request) {
   }
 
   let sent = 0;
+  let deferred = 0;
   const errors: string[] = [];
 
   for (const profile of profiles ?? []) {
     if (!profile.email) continue;
+    if (!canSendDigestTo(profile.email)) {
+      deferred += 1;
+      continue;
+    }
 
     const { data: jobs, error: jobsError } = await supabase
       .from('jobs')
@@ -89,5 +95,5 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.json({ sent, errors });
+  return NextResponse.json({ sent, deferred, errors });
 }

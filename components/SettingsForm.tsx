@@ -29,7 +29,15 @@ interface Profile {
 
 const SENIORITY_OPTIONS = ['', 'junior', 'mid', 'senior', 'lead'];
 
-export default function SettingsForm({ profile, userId }: { profile: Profile | null; userId: string }) {
+export default function SettingsForm({
+  profile,
+  userId,
+  digestAvailable,
+}: {
+  profile: Profile | null;
+  userId: string;
+  digestAvailable: boolean;
+}) {
   const [name, setName] = useState(profile?.name ?? '');
   const [email, setEmail] = useState(profile?.email ?? '');
   const [phone, setPhone] = useState(profile?.phone ?? '');
@@ -53,7 +61,7 @@ export default function SettingsForm({ profile, userId }: { profile: Profile | n
   const [masterCvText, setMasterCvText] = useState(profile?.master_cv_text ?? '');
   const [voiceGuide, setVoiceGuide] = useState(profile?.voice_guide ?? '');
   const [proofPoints, setProofPoints] = useState(profile?.proof_points ?? '');
-  const [notifyDigest, setNotifyDigest] = useState(profile?.notify_digest ?? false);
+  const [notifyDigest, setNotifyDigest] = useState(digestAvailable && (profile?.notify_digest ?? false));
 
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'error'>('idle');
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -285,12 +293,34 @@ export default function SettingsForm({ profile, userId }: { profile: Profile | n
         </div>
       </Section>
 
-      <Section eyebrow="Notifications" title="A quieter inbox" description="Optional. The digest goes to your account email.">
-        <label className="flex items-center justify-between gap-5 rounded-2xl bg-black/20 px-4 py-3.5" style={{ boxShadow: 'inset 0 0 0 1px rgb(var(--c-border))' }}>
+      <Section
+        eyebrow="Notifications"
+        title="A quieter inbox"
+        description={
+          digestAvailable
+            ? 'Optional. The digest goes to your account email.'
+            : 'Paused until RoleSearchHQ has a verified sending domain.'
+        }
+      >
+        <label
+          className={`flex items-center justify-between gap-5 rounded-2xl bg-black/20 px-4 py-3.5 ${
+            digestAvailable ? '' : 'opacity-75'
+          }`}
+          style={{ boxShadow: 'inset 0 0 0 1px rgb(var(--c-border))' }}
+        >
           <span>
-            <span className="block text-[14px] font-semibold text-text">Daily digest of new matches</span>
+            <span className="flex flex-wrap items-center gap-2 text-[14px] font-semibold text-text">
+              Daily digest of new matches
+              {!digestAvailable && (
+                <span className="rounded-full bg-warnBg px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-[0.12em] text-warnInk ring-1 ring-inset ring-warnLine/50">
+                  Paused
+                </span>
+              )}
+            </span>
             <span className="mt-0.5 block text-[12.5px] leading-relaxed text-muted">
-              One short email when new roles clear your cutoff.
+              {digestAvailable
+                ? 'One short email when new roles clear your cutoff.'
+                : 'Email to other recipients is held until a sending domain is verified. Nothing will be sent.'}
             </span>
           </span>
           <span className="relative inline-flex shrink-0">
@@ -298,6 +328,7 @@ export default function SettingsForm({ profile, userId }: { profile: Profile | n
               type="checkbox"
               checked={notifyDigest}
               onChange={(e) => setNotifyDigest(e.target.checked)}
+              disabled={!digestAvailable}
               className="peer sr-only"
             />
             <span className="h-6 w-11 rounded-full bg-white/10 transition-colors peer-checked:bg-accent after:absolute after:left-1 after:top-1 after:h-4 after:w-4 after:rounded-full after:bg-muted after:transition-transform after:content-[''] peer-checked:after:translate-x-5 peer-checked:after:bg-accentInk" />

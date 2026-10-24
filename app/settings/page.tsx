@@ -7,6 +7,7 @@ import DeleteAccount from '@/components/DeleteAccount';
 import AccountBar from '@/components/AccountBar';
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { canSendDigestTo } from '@/lib/digest-config';
 
 export const metadata: Metadata = { title: 'Settings' };
 export const dynamic = 'force-dynamic';
@@ -30,6 +31,8 @@ export default async function SettingsPage() {
       .gte('created_at', fourteenDaysAgo)
       .order('created_at', { ascending: false }),
   ]);
+
+  const digestAvailable = canSendDigestTo(profile?.email);
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:py-8">
@@ -56,7 +59,7 @@ export default async function SettingsPage() {
       </section>
 
       <div className="mt-10">
-        <SettingsForm profile={profile} userId={userId as string} />
+        <SettingsForm profile={profile} userId={userId as string} digestAvailable={digestAvailable} />
       </div>
 
       {recentRejections && recentRejections.length > 0 && (
@@ -80,7 +83,7 @@ export default async function SettingsPage() {
         </section>
       )}
 
-      <MaintenancePanel />
+      <MaintenancePanel digestAvailable={digestAvailable} />
       <DeleteAccount />
 
       <p className="mt-8 text-[12px] text-muted/80">

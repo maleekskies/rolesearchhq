@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { buildDigestEmailHtml } from '@/lib/digest-email';
+import { canSendDigestTo, DIGEST_DEFERRED_MESSAGE, DIGEST_FROM } from '@/lib/digest-config';
 
 // POST /api/digest/test
 // Sends one digest to the current user immediately, so you can confirm the
@@ -26,6 +27,10 @@ export async function POST() {
     return NextResponse.json({ error: 'No email on file in Settings.' }, { status: 400 });
   }
 
+  if (!canSendDigestTo(profile.email)) {
+    return NextResponse.json({ error: DIGEST_DEFERRED_MESSAGE }, { status: 403 });
+  }
+
   const { data: jobs, error: jobsError } = await supabase
     .from('jobs')
     .select('title, company, match_score')
@@ -48,7 +53,7 @@ export async function POST() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: process.env.RESEND_FROM || 'RoleSearchHQ <onboarding@resend.dev>',
+        from: DIGEST_FROM,
         to: profile.email,
         subject: 'RoleSearchHQ test digest',
         html,
