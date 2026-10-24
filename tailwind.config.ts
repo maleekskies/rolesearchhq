@@ -6,7 +6,9 @@ const config: Config = {
     extend: {
       colors: {
         bg: 'rgb(var(--c-bg) / <alpha-value>)',
+        bg2: 'rgb(var(--c-bg2) / <alpha-value>)',
         surface: 'rgb(var(--c-surface) / <alpha-value>)',
+        surface2: 'rgb(var(--c-surface2) / <alpha-value>)',
         surfaceHover: 'rgb(var(--c-surfaceHover) / <alpha-value>)',
         border: 'rgb(var(--c-border) / <alpha-value>)',
         text: 'rgb(var(--c-text) / <alpha-value>)',
@@ -20,15 +22,20 @@ const config: Config = {
         warnInk: 'rgb(var(--c-warnInk) / <alpha-value>)',
         danger: 'rgb(var(--c-danger) / <alpha-value>)',
         good: 'rgb(var(--c-good) / <alpha-value>)',
+        water: 'rgb(var(--c-water) / <alpha-value>)',
       },
       fontFamily: {
         display: ['var(--font-display)', 'system-ui', 'sans-serif'],
         sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
-        sm: '4px',
-        DEFAULT: '6px',
-        lg: '10px',
+        sm: '8px',
+        DEFAULT: '12px',
+        md: '14px',
+        lg: '18px',
+        xl: '22px',
+        '2xl': '28px',
+        '3xl': '36px',
       },
     },
   },

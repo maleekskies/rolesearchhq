@@ -107,102 +107,130 @@ export default async function AllMatchesPage({
   }
 
   return (
-    <div className="px-6 py-10 pb-24 md:pb-10">
+    <div className="mx-auto w-full max-w-[1500px] px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:py-8">
       {searchParams.first_run && (
-        <div className="bg-accent/10 border border-accent/30 rounded-lg px-4 py-3 mb-6 text-sm text-text">
-          These are scored against the profile you just wrote. Open one to see why.
+        <div className="mb-6 rounded-2xl border border-accent/25 bg-accent/10 px-4 py-3 text-sm text-text">
+          These are scored against the profile you just wrote. Open one to see why, or save it to your pipeline.
         </div>
       )}
 
-      <div className="mb-6">
-        <h1 className="font-display text-3xl text-text mb-1">All matches</h1>
-        <p className="text-muted">
-          {visible.length > 0 || freshTotal > 0
-            ? activeMinScore > 0
-              ? `${visible.length} roles at or above ${activeMinScore} match${hasMore ? ` (showing the first ${fresh.length} new ones)` : ''}.`
-              : `${visible.length} roles, ${sort === 'score' ? 'highest match first' : 'newest first'}.`
-            : 'Nothing here yet.'}
-        </p>
-      </div>
+      <header className="flex flex-wrap items-start justify-between gap-5">
+        <div>
+          <p className="eyebrow">Everything we found</p>
+          <h1 className="mt-2 font-display text-[clamp(38px,4.4vw,56px)] font-semibold leading-[0.98] tracking-[-0.04em] text-text">
+            All matches
+          </h1>
+          <p className="mt-3 max-w-[62ch] text-[15px] leading-relaxed text-muted">
+            {visible.length > 0 || freshTotal > 0
+              ? activeMinScore > 0
+                ? `${visible.length} roles at or above ${activeMinScore} match${hasMore ? ` (showing the first ${fresh.length} new ones)` : ''}.`
+                : `${visible.length} roles, ${sort === 'score' ? 'highest match first' : 'newest first'}.`
+              : 'Nothing here yet. Scan the boards or add a role by URL.'}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <ScanButton />
+          <Link href="/" className="btn btn-ghost btn-sm">
+            Back to the map
+          </Link>
+        </div>
+      </header>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <div className="mt-7 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="New matches" value={newCount} />
-        <Stat label="Ready to review" value={readyToReview.length} />
+        <Stat label="Ready to review" value={readyToReview.length} accent />
         <Stat label="In pipeline" value={inPipeline} />
         <Stat label="Avg match" value={avgMatch ?? 'n/a'} sub={`cutoff ${minMatch}`} />
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <ScanButton />
+      <div className="mt-6 flex flex-col gap-3 rounded-2xl bg-black/10 p-3 sm:flex-row sm:flex-wrap sm:items-center" style={{ boxShadow: 'inset 0 0 0 1px rgb(var(--c-border))' }}>
         <AddJobForm />
+        <div className="hidden h-7 w-px bg-border sm:block" aria-hidden="true" />
+        <div className="min-w-0 flex-1">
+          <ScoreUrlForm />
+        </div>
       </div>
 
-      <div className="mb-4">
-        <ScoreUrlForm />
-      </div>
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <form action="/all" method="get" className="flex w-full gap-2 sm:w-auto">
+          {sort !== 'recent' && <input type="hidden" name="sort" value={sort} />}
+          {activeMinScore !== minMatch && <input type="hidden" name="minScore" value={activeMinScore} />}
+          <input
+            type="text"
+            name="q"
+            defaultValue={query ?? ''}
+            placeholder="Search by title or company"
+            className="field-input w-full py-2.5 text-[13.5px] sm:w-80"
+          />
+          <button type="submit" className="btn btn-ghost btn-sm">Search</button>
+        </form>
 
-      <form className="mb-4" action="/all" method="get">
-        {sort !== 'recent' && <input type="hidden" name="sort" value={sort} />}
-        <input
-          type="text"
-          name="q"
-          defaultValue={query ?? ''}
-          placeholder="Search by title or company"
-          className="w-full sm:w-80 bg-surface border border-border rounded px-3 py-2 text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent"
-        />
-      </form>
-
-      <div className="flex items-center gap-4 mb-4 text-xs">
-        <div className="flex items-center gap-2 text-muted">
-          <span>Sort:</span>
-          <Link href={sortLink('recent')} className={sort === 'recent' ? 'text-text font-medium' : 'hover:text-text'}>
+        <div className="flex flex-wrap items-center gap-2 text-[12px]">
+          <span className="text-muted">Sort</span>
+          <Link
+            href={sortLink('recent')}
+            className={`rounded-full px-3 py-1.5 transition-colors ${
+              sort === 'recent' ? 'bg-accent/10 font-semibold text-accent' : 'text-muted hover:text-text'
+            }`}
+          >
             Recent
           </Link>
-          <span>·</span>
-          <Link href={sortLink('score')} className={sort === 'score' ? 'text-text font-medium' : 'hover:text-text'}>
-            Score, highest first
+          <Link
+            href={sortLink('score')}
+            className={`rounded-full px-3 py-1.5 transition-colors ${
+              sort === 'score' ? 'bg-accent/10 font-semibold text-accent' : 'text-muted hover:text-text'
+            }`}
+          >
+            Score
           </Link>
-        </div>
-        {activeMinScore > 0 ? (
-          <div className="text-muted">
-            <span>Showing {activeMinScore}+ only.</span>{' '}
-            <Link href="/all?minScore=0" className="text-accent hover:underline">
+          <span className="mx-1 h-4 w-px bg-border" aria-hidden="true" />
+          {activeMinScore > 0 ? (
+            <Link href="/all?minScore=0" className="text-muted underline decoration-muted/30 underline-offset-4 hover:text-accent">
               Show everything
             </Link>
-          </div>
-        ) : (
-          <div className="text-muted">
-            <Link href={`/all?minScore=${minMatch}`} className="text-accent hover:underline">
-              Only show {minMatch}+ match
+          ) : (
+            <Link
+              href={`/all?minScore=${minMatch}`}
+              className="text-muted underline decoration-muted/30 underline-offset-4 hover:text-accent"
+            >
+              Only {minMatch}+
             </Link>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-6 items-start">
+      <div className="mt-6 grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div>
           <JobList jobs={visible} />
           {hasMore && (
-            <Link
-              href={moreLink()}
-              className="block text-center text-sm text-accent hover:underline mt-4"
-            >
+            <Link href={moreLink()} className="mt-4 block text-center text-sm font-semibold text-accent hover:underline">
               Show more ({freshTotal - fresh.length} more new roles)
             </Link>
           )}
         </div>
 
-        <div className="flex flex-col gap-4">
-          <div className="bg-surface border border-border rounded-lg p-4">
-            <h2 className="text-sm font-medium text-text mb-3">Review queue</h2>
+        <aside className="flex flex-col gap-4 lg:sticky lg:top-5">
+          <div className="rounded-2xl bg-surface p-4" style={{ boxShadow: 'inset 0 0 0 1px rgb(var(--c-border))' }}>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-display text-[16px] font-semibold text-text">Review queue</h2>
+              <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[11px] tabular-nums text-accent">
+                {readyToReview.length}
+              </span>
+            </div>
             {readyToReview.length === 0 ? (
-              <p className="text-xs text-muted">No kits waiting on you right now.</p>
+              <p className="mt-2 text-[12px] leading-relaxed text-muted">
+                No kits waiting on you right now. Save a role and its kit will appear here.
+              </p>
             ) : (
-              <ul className="flex flex-col gap-2">
+              <ul className="mt-3 flex flex-col gap-2">
                 {readyToReview.slice(0, 3).map((job) => (
                   <li key={job.id}>
-                    <Link href={`/kit-studio?job=${job.id}`} className="text-sm text-text hover:text-accent block truncate">
-                      {job.title} <span className="text-muted">· {job.company}</span>
+                    <Link
+                      href={`/kit-studio?job=${job.id}`}
+                      className="block rounded-xl bg-black/15 px-3 py-2.5 text-[13px] text-text transition-colors hover:bg-white/[0.06]"
+                    >
+                      <span className="block truncate">{job.title}</span>
+                      <span className="mt-0.5 block truncate text-[11.5px] text-muted">{job.company}</span>
                     </Link>
                   </li>
                 ))}
@@ -210,35 +238,47 @@ export default async function AllMatchesPage({
             )}
           </div>
 
-          <div className="bg-surface border border-border rounded-lg p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-medium text-text">Targeting</h2>
-              <Link href="/settings" className="text-xs text-accent hover:underline">
+          <div className="rounded-2xl bg-surface p-4" style={{ boxShadow: 'inset 0 0 0 1px rgb(var(--c-border))' }}>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-display text-[16px] font-semibold text-text">Targeting</h2>
+              <Link href="/settings" className="text-[11.5px] font-semibold text-accent hover:underline">
                 Edit
               </Link>
             </div>
-            <dl className="flex flex-col gap-2 text-xs">
+            <dl className="mt-3 flex flex-col gap-2.5 text-[12px]">
               <SnapshotRow label="Titles" values={profile.target_titles} />
               <SnapshotRow label="Locations" values={profile.locations} />
               <SnapshotRow label="Must-haves" values={profile.must_haves} />
               <div>
-                <dt className="text-muted mb-0.5">Min match</dt>
+                <dt className="mb-0.5 text-muted">Min match</dt>
                 <dd className="text-text">{minMatch}</dd>
               </div>
             </dl>
           </div>
-        </div>
+        </aside>
       </div>
     </div>
   );
 }
 
-function Stat({ label, value, sub }: { label: string; value: number | string; sub?: string }) {
+function Stat({
+  label,
+  value,
+  sub,
+  accent = false,
+}: {
+  label: string;
+  value: number | string;
+  sub?: string;
+  accent?: boolean;
+}) {
   return (
-    <div className="bg-surface border border-border rounded-lg px-4 py-3">
-      <p className="text-2xl font-display font-bold grad-text tabular-nums">{value}</p>
-      <p className="text-xs text-muted">{label}</p>
-      {sub && <p className="text-xs text-muted mt-0.5">{sub}</p>}
+    <div className="rounded-2xl bg-surface px-4 py-3.5" style={{ boxShadow: 'inset 0 0 0 1px rgb(var(--c-border))' }}>
+      <p className={`font-display text-[28px] font-semibold leading-none tabular-nums ${accent ? 'text-accent' : 'text-text'}`}>
+        {value}
+      </p>
+      <p className="mt-1.5 text-[11.5px] text-muted">{label}</p>
+      {sub && <p className="mt-0.5 text-[10.5px] text-muted/70">{sub}</p>}
     </div>
   );
 }
@@ -246,8 +286,8 @@ function Stat({ label, value, sub }: { label: string; value: number | string; su
 function SnapshotRow({ label, values }: { label: string; values: string[] | null }) {
   return (
     <div>
-      <dt className="text-muted mb-0.5">{label}</dt>
-      <dd className="text-text">{values && values.length > 0 ? values.join(', ') : 'Not set'}</dd>
+      <dt className="mb-0.5 text-muted">{label}</dt>
+      <dd className="leading-relaxed text-text">{values && values.length > 0 ? values.join(', ') : 'Not set'}</dd>
     </div>
   );
 }

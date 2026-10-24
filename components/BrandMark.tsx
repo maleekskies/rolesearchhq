@@ -1,23 +1,38 @@
+const OUTER_CONTOUR =
+  'M44.8 24.0L45.4 25.2L45.4 26.4L44.9 27.6L44.0 28.6L42.8 29.5L41.5 30.3L40.3 30.9L39.3 31.6L38.5 32.3L37.7 33.1L37.0 33.8L36.2 34.5L35.3 35.1L34.2 35.5L33.1 35.7L32.0 36.0L31.0 36.2L30.1 36.6L29.1 37.1L28.2 37.6L27.3 38.1L26.2 38.5L25.1 38.7L24.0 38.6L22.9 38.3L21.9 37.8L20.9 37.5L19.9 37.2L18.8 37.2L17.5 37.4L16.1 37.7L14.6 38.0L13.1 38.1L11.6 37.9L10.3 37.4L9.3 36.7L8.5 35.7L7.8 34.7L7.3 33.6L6.9 32.5L6.5 31.4L6.2 30.3L6.2 29.2L6.4 28.1L7.0 26.9L7.8 25.8L8.7 24.9L9.5 24.0L10.2 23.2L10.4 22.5L10.3 21.7L9.9 20.7L9.4 19.7L8.9 18.6L8.7 17.5L8.8 16.4L9.2 15.4L9.8 14.6L10.5 13.8L11.3 13.0L12.0 12.2L12.7 11.3L13.5 10.5L14.4 9.6L15.4 9.0L16.6 8.5L17.8 8.3L19.1 8.3L20.4 8.3L21.6 8.4L22.8 8.4L24.0 8.2L25.2 7.9L26.5 7.7L27.8 7.6L29.0 7.9L30.1 8.4L31.0 9.4L31.7 10.5L32.2 11.7L32.7 12.8L33.1 13.8L33.6 14.6L34.2 15.2L35.0 15.7L35.8 16.2L36.6 16.7L37.4 17.3L38.1 18.0L38.8 18.7L39.6 19.4L40.5 20.2L41.5 21.0L42.7 21.9L43.9 22.9L44.8 24.0Z';
+
+const INNER_CONTOUR =
+  'M36.1 24.0L35.7 24.7L35.3 25.3L34.7 25.8L34.3 26.4L34.0 26.9L33.8 27.5L33.7 28.1L33.6 28.8L33.5 29.5L33.2 30.1L32.7 30.6L32.0 30.9L31.3 31.2L30.5 31.3L29.8 31.5L29.2 31.7L28.7 32.1L28.2 32.7L27.7 33.3L27.1 33.9L26.4 34.4L25.7 34.9L24.8 35.1L24.0 35.3L23.1 35.4L22.3 35.4L21.4 35.4L20.4 35.4L19.5 35.4L18.7 35.1L17.9 34.7L17.3 34.0L16.9 33.2L16.7 32.2L16.6 31.3L16.6 30.4L16.6 29.6L16.4 29.0L16.1 28.6L15.6 28.2L15.0 27.8L14.5 27.4L13.9 26.9L13.6 26.4L13.3 25.8L13.0 25.2L12.8 24.6L12.5 24.0L12.1 23.3L11.8 22.6L11.5 21.9L11.4 21.1L11.6 20.4L11.9 19.7L12.5 19.1L13.1 18.6L13.8 18.1L14.4 17.7L14.9 17.1L15.3 16.5L15.7 15.8L16.1 15.1L16.7 14.5L17.4 14.1L18.2 13.8L19.1 13.8L20.0 14.0L21.0 14.2L21.8 14.4L22.6 14.6L23.3 14.8L24.0 14.9L24.7 15.0L25.3 15.2L26.0 15.4L26.6 15.7L27.1 16.0L27.7 16.3L28.3 16.4L29.1 16.4L30.0 16.2L31.1 16.1L32.2 15.9L33.3 15.9L34.4 16.2L35.2 16.6L35.8 17.2L36.1 18.0L36.3 18.8L36.3 19.6L36.4 20.4L36.4 21.1L36.5 21.9L36.5 22.6L36.4 23.3L36.1 24.0Z';
+
+/**
+ * The Contour Summit.
+ *
+ * Two hand-drawn topography rings surround a faceted brass peak. The water-blue
+ * dot is "you are here" on the map. It works at 28px in the nav and at 512px
+ * as the app icon, and it is a drawing rather than a letterform.
+ */
 export default function BrandMark({ className = 'h-9 w-9' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 40 40" className={className} aria-hidden="true" focusable="false">
-      <defs>
-        <linearGradient id="rshq-mark-gradient" x1="8" y1="6" x2="34" y2="35" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#34E4C8" />
-          <stop offset="1" stopColor="#A05CFF" />
-        </linearGradient>
-      </defs>
-      <rect width="40" height="40" rx="10" fill="#0A0E17" />
-      <rect x="0.5" y="0.5" width="39" height="39" rx="9.5" fill="none" stroke="#FFFFFF" strokeOpacity="0.1" />
+    <svg viewBox="0 0 48 48" className={className} aria-hidden="true" focusable="false">
       <path
-        d="M12.5 30V10h8.1c4.5 0 7.4 2.7 7.4 6.4 0 3.3-2 5.6-5.4 6.3l6.4 7.3"
+        d={OUTER_CONTOUR}
         fill="none"
-        stroke="url(#rshq-mark-gradient)"
-        strokeWidth="3.2"
-        strokeLinecap="round"
+        stroke="#5F917A"
+        strokeWidth="1.6"
         strokeLinejoin="round"
       />
-      <circle cx="31.5" cy="9" r="2" fill="#34E4C8" />
+      <path
+        d={INNER_CONTOUR}
+        fill="none"
+        stroke="#A9C9A8"
+        strokeWidth="1.35"
+        strokeLinejoin="round"
+      />
+      <path d="M24 13.2 24 29.4 16.2 29.4Z" fill="#C89A3F" />
+      <path d="M24 13.2 31.8 29.4 24 29.4Z" fill="#E8C070" />
+      <path d="M24 13.2V29.4" stroke="#F3D590" strokeWidth="0.7" strokeLinecap="round" opacity="0.75" />
+      <circle cx="37.8" cy="16.2" r="3.1" fill="#7CC4D6" opacity="0.14" />
+      <circle cx="37.8" cy="16.2" r="1.45" fill="#7CC4D6" />
     </svg>
   );
 }

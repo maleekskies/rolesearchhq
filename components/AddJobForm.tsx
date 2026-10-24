@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Plus } from 'lucide-react';
 
 export default function AddJobForm() {
   const router = useRouter();
@@ -37,11 +38,9 @@ export default function AddJobForm() {
 
   if (!open) {
     return (
-      <button
-        onClick={() => setOpen(true)}
-        className="w-full sm:w-auto bg-surface border border-border hover:border-accent text-text rounded px-4 py-3 text-sm transition-colors"
-      >
-        + Add job (paste URL or JD)
+      <button onClick={() => setOpen(true)} className="btn btn-ghost btn-sm w-full sm:w-auto">
+        <Plus size={15} aria-hidden="true" />
+        Add job
       </button>
     );
   }
@@ -49,22 +48,23 @@ export default function AddJobForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-surface border border-border rounded-lg p-4 flex flex-col gap-3"
+      className="flex w-full flex-col gap-3 rounded-2xl bg-surface p-4"
+      style={{ boxShadow: 'inset 0 0 0 1px rgb(var(--c-border))' }}
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <input
           required
           placeholder="Job title"
           value={form.title}
           onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-          className="bg-bg border border-border rounded px-3 py-2 text-text placeholder:text-muted focus:outline-none focus:border-accent"
+          className="field-input py-2.5 text-[13.5px]"
         />
         <input
           required
           placeholder="Company"
           value={form.company}
           onChange={(e) => setForm((f) => ({ ...f, company: e.target.value }))}
-          className="bg-bg border border-border rounded px-3 py-2 text-text placeholder:text-muted focus:outline-none focus:border-accent"
+          className="field-input py-2.5 text-[13.5px]"
         />
       </div>
       <input
@@ -72,37 +72,29 @@ export default function AddJobForm() {
         placeholder="Apply URL (LinkedIn link is fine)"
         value={form.url}
         onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))}
-        className="bg-bg border border-border rounded px-3 py-2 text-text placeholder:text-muted focus:outline-none focus:border-accent"
+        className="field-input py-2.5 text-[13.5px]"
       />
       <input
         placeholder="Location (optional)"
         value={form.location}
         onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
-        className="bg-bg border border-border rounded px-3 py-2 text-text placeholder:text-muted focus:outline-none focus:border-accent"
+        className="field-input py-2.5 text-[13.5px]"
       />
       <textarea
         rows={6}
         placeholder="Paste the full job description here"
         value={form.description}
         onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-        className="bg-bg border border-border rounded px-3 py-2 text-text placeholder:text-muted focus:outline-none focus:border-accent"
+        className="field-input resize-y py-2.5 text-[13.5px] leading-relaxed"
       />
-      <div className="flex items-center gap-3">
-        <button
-          type="submit"
-          disabled={status === 'saving'}
-          className="grad-bg text-bg font-medium rounded px-4 py-2.5 hover:opacity-90 transition-colors disabled:opacity-50"
-        >
+      <div className="flex flex-wrap items-center gap-3">
+        <button type="submit" disabled={status === 'saving'} className="btn btn-primary btn-sm disabled:opacity-50">
           {status === 'saving' ? 'Adding…' : 'Add to Today'}
         </button>
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          className="text-muted text-sm hover:text-text"
-        >
+        <button type="button" onClick={() => setOpen(false)} className="px-2 py-2 text-[13px] text-muted hover:text-text">
           Cancel
         </button>
-        {status === 'error' && errorMessage && <span className="text-danger text-sm">{errorMessage}</span>}
+        {status === 'error' && errorMessage && <span className="text-[12px] text-danger">{errorMessage}</span>}
       </div>
     </form>
   );

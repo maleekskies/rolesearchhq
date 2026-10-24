@@ -39,17 +39,17 @@ export default function ChipInput({
 
   return (
     <div>
-      <div className="flex flex-wrap gap-2 bg-surface border border-border rounded px-3 py-2 focus-within:border-accent">
+      <div className="flex flex-wrap gap-2 rounded-md border border-border bg-black/20 px-3 py-2.5 transition-shadow focus-within:border-accent focus-within:shadow-[0_0_0_4px_rgba(224,180,90,.14)]">
         {values.map((v) => (
           <span
             key={v}
-            className="flex items-center gap-1.5 bg-accentDim/30 text-accent text-sm rounded-full px-3 py-1"
+            className="flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1 text-[13.5px] font-medium text-accent ring-1 ring-inset ring-accent/20"
           >
             {v}
             <button
               type="button"
               onClick={() => remove(v)}
-              className="text-accent/70 hover:text-accent leading-none"
+              className="leading-none text-accent/65 transition-colors hover:text-accent"
               aria-label={`Remove ${v}`}
             >
               ×
@@ -62,17 +62,18 @@ export default function ChipInput({
           onKeyDown={handleKeyDown}
           onBlur={() => commit(draft)}
           placeholder={values.length === 0 ? placeholder : ''}
-          className="flex-1 min-w-[120px] bg-transparent text-text placeholder:text-muted focus:outline-none py-1"
+          className="min-w-[120px] flex-1 bg-transparent py-1 text-[14.5px] text-text placeholder:text-muted/60 focus:outline-none"
         />
       </div>
       {unusedSuggestions.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-2">
+        <div className="mt-2.5 flex flex-wrap gap-2">
           {unusedSuggestions.map((s) => (
             <button
               key={s}
               type="button"
               onClick={() => commit(s)}
-              className="text-xs text-muted border border-border rounded-full px-3 py-1 hover:border-accent hover:text-text transition-colors"
+              className="rounded-full bg-white/[0.05] px-3 py-1.5 text-[12px] font-medium text-muted transition-colors hover:bg-white/[0.09] hover:text-text"
+              style={{ boxShadow: 'inset 0 0 0 1px rgb(var(--c-border))' }}
             >
               + {s}
             </button>

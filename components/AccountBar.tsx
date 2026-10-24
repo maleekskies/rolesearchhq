@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import ThemeToggle from '@/components/ThemeToggle';
 
 // Shows which account this device is signed in as, with a Sign out button.
 // Everything in RoleSearchHQ is stored against the account, so two devices only
@@ -26,20 +25,20 @@ export default function AccountBar({ className = '' }: { className?: string }) {
   if (!email) return null;
 
   return (
-    <div className={`text-xs ${className}`}>
-      <p className="text-muted">Signed in as</p>
-      <p className="text-text break-all mb-2">{email}</p>
+    <div
+      className={`rounded-[18px] bg-black/20 px-3.5 py-3.5 text-[13px] text-muted ${className}`}
+      style={{ boxShadow: 'inset 0 0 0 1px rgb(var(--c-border))' }}
+    >
+      <b className="mb-0.5 block font-semibold text-text">{email}</b>
+      <span>Signed in</span>
       <button
         type="button"
         onClick={signOut}
         disabled={busy}
-        className="text-muted underline hover:text-text disabled:opacity-50"
+        className="mt-1.5 block font-semibold text-accent underline decoration-accent/40 underline-offset-[3px] hover:decoration-accent disabled:opacity-50"
       >
-        {busy ? 'Signing out...' : 'Sign out'}
+        {busy ? 'Signing out…' : 'Sign out'}
       </button>
-      <div className="mt-2">
-        <ThemeToggle />
-      </div>
     </div>
   );
 }

@@ -101,92 +101,93 @@ export default function MaintenancePanel() {
   }
 
   return (
-    <div className="mt-10 pt-8 border-t border-border flex flex-col gap-6">
-      <h2 className="text-sm font-medium text-text">Maintenance</h2>
+    <section className="mt-10 border-t border-border pt-8">
+      <p className="eyebrow">Maintenance</p>
+      <h2 className="mt-2 font-display text-[22px] font-semibold text-text">Keep the map honest</h2>
+      <p className="mt-2 text-[13px] leading-relaxed text-muted">
+        Re-score old roles, clear what you no longer need, or take your data with you.
+      </p>
 
-      <div>
-        <p className="text-sm text-text mb-1">Re-score all jobs</p>
-        <p className="text-xs text-muted mb-2">
-          Applies your current target titles, must-haves, and deal-breakers to every job already in
-          the Today list, not just new scans. Anything hitting a deal-breaker moves to Rejected.
-        </p>
-        <button
-          onClick={handleRescore}
-          disabled={rescoring}
-          className="bg-surface border border-border hover:border-accent text-text rounded px-4 py-2 text-sm transition-colors disabled:opacity-50"
-        >
-          {rescoring ? 'Rescoring…' : 'Re-score all jobs'}
-        </button>
-        {rescoreResult && <p className="text-xs text-muted mt-2">{rescoreResult}</p>}
-      </div>
-
-      <div>
-        <p className="text-sm text-text mb-1">Clear the board</p>
-        <p className="text-xs text-muted mb-2">
-          Deletes jobs matching the scope below. This can't be undone.
-        </p>
-        <div className="flex items-center gap-2 flex-wrap">
-          <select
-            value={clearScope}
-            onChange={(e) => {
-              setClearScope(e.target.value);
-              setConfirmClear(false);
-            }}
-            className="bg-surface border border-border rounded px-2 py-1.5 text-text text-sm"
-          >
-            <option value="rejected">Rejected jobs</option>
-            <option value="ignored">Ignored jobs</option>
-            <option value="stale">Stale, untouched 30+ days</option>
-            <option value="all">Everything</option>
-          </select>
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-2xl bg-black/15 p-4" style={{ boxShadow: 'inset 0 0 0 1px rgb(var(--c-border))' }}>
+          <h3 className="text-[14px] font-semibold text-text">Re-score all jobs</h3>
+          <p className="mt-1.5 text-[12px] leading-relaxed text-muted">
+            Applies your current titles, must-haves and deal-breakers to every job already in the Today list —
+            not just new scans. Anything hitting a deal-breaker moves to Rejected.
+          </p>
           <button
-            onClick={handleClear}
-            disabled={clearing}
-            className={`rounded px-4 py-2 text-sm transition-colors disabled:opacity-50 ${
-              confirmClear
-                ? 'bg-danger text-bg'
-                : 'bg-surface border border-danger/40 text-danger hover:bg-danger/10'
-            }`}
+            onClick={handleRescore}
+            disabled={rescoring}
+            className="btn btn-ghost btn-sm mt-3 disabled:opacity-50"
           >
-            {clearing ? 'Clearing…' : confirmClear ? 'Confirm delete' : 'Clear'}
+            {rescoring ? 'Rescoring…' : 'Re-score all jobs'}
           </button>
-          {confirmClear && (
-            <button onClick={() => setConfirmClear(false)} className="text-xs text-muted hover:text-text">
-              Cancel
-            </button>
-          )}
+          {rescoreResult && <p className="mt-2 text-[11.5px] leading-relaxed text-muted">{rescoreResult}</p>}
         </div>
-        {clearResult && <p className="text-xs text-muted mt-2">{clearResult}</p>}
-      </div>
 
-      <div>
-        <p className="text-sm text-text mb-1">Test the daily digest</p>
-        <p className="text-xs text-muted mb-2">
-          Sends one digest to your email right now, regardless of the toggle above. Needs
-          RESEND_API_KEY set on the server.
-        </p>
-        <button
-          onClick={handleTestDigest}
-          disabled={testingDigest}
-          className="bg-surface border border-border hover:border-accent text-text rounded px-4 py-2 text-sm transition-colors disabled:opacity-50"
-        >
-          {testingDigest ? 'Sending…' : 'Send test digest'}
-        </button>
-        {digestResult && <p className="text-xs text-muted mt-2">{digestResult}</p>}
-      </div>
+        <div className="rounded-2xl bg-black/15 p-4" style={{ boxShadow: 'inset 0 0 0 1px rgb(var(--c-border))' }}>
+          <h3 className="text-[14px] font-semibold text-text">Clear the board</h3>
+          <p className="mt-1.5 text-[12px] leading-relaxed text-muted">
+            Deletes jobs matching the scope below. This can't be undone.
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <select
+              value={clearScope}
+              onChange={(e) => {
+                setClearScope(e.target.value);
+                setConfirmClear(false);
+              }}
+              className="field-input w-auto py-2 text-[13px]"
+            >
+              <option value="rejected">Rejected jobs</option>
+              <option value="ignored">Ignored jobs</option>
+              <option value="stale">Stale, untouched 30+ days</option>
+              <option value="all">Everything</option>
+            </select>
+            <button
+              onClick={handleClear}
+              disabled={clearing}
+              className={`btn btn-sm disabled:opacity-50 ${
+                confirmClear ? 'bg-danger text-[#2A0E0B]' : 'btn-ghost text-danger'
+              }`}
+            >
+              {clearing ? 'Clearing…' : confirmClear ? 'Confirm delete' : 'Clear'}
+            </button>
+            {confirmClear && (
+              <button onClick={() => setConfirmClear(false)} className="text-[12px] text-muted hover:text-text">
+                Cancel
+              </button>
+            )}
+          </div>
+          {clearResult && <p className="mt-2 text-[11.5px] leading-relaxed text-muted">{clearResult}</p>}
+        </div>
 
-      <div>
-        <p className="text-sm text-text mb-1">Export your data</p>
-        <p className="text-xs text-muted mb-2">
-          Downloads your profile, jobs, kits, and history as one JSON file.
-        </p>
-        <a
-          href="/api/export"
-          className="inline-block bg-surface border border-border hover:border-accent text-text rounded px-4 py-2 text-sm transition-colors"
-        >
-          Export as JSON
-        </a>
+        <div className="rounded-2xl bg-black/15 p-4" style={{ boxShadow: 'inset 0 0 0 1px rgb(var(--c-border))' }}>
+          <h3 className="text-[14px] font-semibold text-text">Test the daily digest</h3>
+          <p className="mt-1.5 text-[12px] leading-relaxed text-muted">
+            Sends one digest to your email right now, regardless of the toggle above. Needs RESEND_API_KEY set on
+            the server.
+          </p>
+          <button
+            onClick={handleTestDigest}
+            disabled={testingDigest}
+            className="btn btn-ghost btn-sm mt-3 disabled:opacity-50"
+          >
+            {testingDigest ? 'Sending…' : 'Send test digest'}
+          </button>
+          {digestResult && <p className="mt-2 text-[11.5px] leading-relaxed text-muted">{digestResult}</p>}
+        </div>
+
+        <div className="rounded-2xl bg-black/15 p-4" style={{ boxShadow: 'inset 0 0 0 1px rgb(var(--c-border))' }}>
+          <h3 className="text-[14px] font-semibold text-text">Export your data</h3>
+          <p className="mt-1.5 text-[12px] leading-relaxed text-muted">
+            Downloads your profile, jobs, kits and history as one JSON file.
+          </p>
+          <a href="/api/export" className="btn btn-ghost btn-sm mt-3">
+            Export as JSON
+          </a>
+        </div>
       </div>
-    </div>
+    </section>
   );
 }

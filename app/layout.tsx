@@ -1,60 +1,60 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
-import { Instrument_Sans } from 'next/font/google';
+import { Geologica, Hanken_Grotesk } from 'next/font/google';
 import Sidebar from '@/components/Sidebar';
 import MobileHeader from '@/components/MobileHeader';
 
-const sans = Instrument_Sans({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
+const display = Geologica({
+  subsets: ['latin'],
+  variable: '--font-display',
+  display: 'swap',
+});
 
-// Runs before first paint so a saved theme choice never flashes the wrong colors.
-// The legacy theme key is read once and moved to the RoleSearchHQ key.
-const themeScript =
-  "try{var k='rolesearchhq-theme',o='hb-theme',t=localStorage.getItem(k)||localStorage.getItem(o);if(t){document.documentElement.dataset.theme=t;if(!localStorage.getItem(k)){localStorage.setItem(k,t);localStorage.removeItem(o)}}}catch(e){}";
+const sans = Hanken_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://rolesearchhq.vercel.app'),
   applicationName: 'RoleSearchHQ',
   title: { default: 'RoleSearchHQ', template: '%s · RoleSearchHQ' },
-  description: 'Your job search, reviewed before it sends.',
+  description: 'Your role landscape, mapped. Roles scored, kits drafted, and nothing sends until you approve it.',
   manifest: '/manifest.json',
   icons: { icon: '/icon.svg', shortcut: '/icon.svg' },
   openGraph: {
     type: 'website',
     siteName: 'RoleSearchHQ',
     title: 'RoleSearchHQ',
-    description: 'Your job search, reviewed before it sends.',
+    description: 'Your role landscape, mapped. Roles scored, kits drafted, and nothing sends until you approve it.',
     url: 'https://rolesearchhq.vercel.app',
   },
   twitter: {
     card: 'summary',
     title: 'RoleSearchHQ',
-    description: 'Your job search, reviewed before it sends.',
+    description: 'Your role landscape, mapped. Roles scored, kits drafted, and nothing sends until you approve it.',
   },
   appleWebApp: {
     capable: true,
     title: 'RoleSearchHQ',
-    statusBarStyle: 'default',
+    statusBarStyle: 'black-translucent',
   },
   category: 'productivity',
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#F4F6F8' },
-    { media: '(prefers-color-scheme: dark)', color: '#0A0E17' },
-  ],
+  themeColor: '#0E2A1F',
+  colorScheme: 'dark',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={sans.variable} suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-      </head>
-      <body className="bg-bg text-text font-sans min-h-screen">
+    <html lang="en" className={`${display.variable} ${sans.variable}`}>
+      <body className="min-h-screen bg-bg font-sans text-text">
         <div className="flex min-h-screen">
           <Sidebar />
-          <main className="flex-1 min-w-0">
+          <main className="min-w-0 flex-1">
             <MobileHeader />
             {children}
           </main>

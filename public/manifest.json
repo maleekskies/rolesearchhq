@@ -2,12 +2,12 @@
   "id": "/",
   "name": "RoleSearchHQ",
   "short_name": "RoleSearchHQ",
-  "description": "Your job search, reviewed before it sends.",
+  "description": "Your role landscape, mapped. Roles scored, kits drafted, and nothing sends until you approve it.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#0A0E17",
-  "theme_color": "#0A0E17",
+  "background_color": "#0E2A1F",
+  "theme_color": "#0E2A1F",
   "categories": ["productivity", "business"],
   "icons": [
     {

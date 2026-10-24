@@ -1,22 +1,24 @@
 import Link from 'next/link';
-import Brand from '@/components/Brand';
+import { ArrowLeft } from 'lucide-react';
+import ContourField from '@/components/ContourField';
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg px-6">
-      <div className="text-center">
-        <div className="mb-10 flex justify-center">
-          <Brand showTagline />
-        </div>
-        <p className="grad-text font-display text-5xl font-bold mb-3">404</p>
-        <h1 className="text-text text-lg mb-2">That page isn't here.</h1>
-        <p className="text-muted text-sm mb-6">
-          The job or page you're looking for doesn't exist, or you don't have access to it.
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-bg px-5 py-10">
+      <ContourField className="pointer-events-none absolute inset-0 h-full w-full opacity-60" />
+      <div className="relative z-10 w-full max-w-xl text-center">
+        <p className="eyebrow">Off the map</p>
+        <p className="mt-4 font-display text-[clamp(76px,16vw,140px)] font-semibold leading-none tracking-[-0.07em] text-accent">
+          404
         </p>
-        <Link
-          href="/"
-          className="grad-bg text-bg font-medium rounded px-5 py-2.5 hover:opacity-90 transition-colors inline-block"
-        >
+        <h1 className="mt-3 font-display text-[28px] font-semibold tracking-[-0.03em] text-text">
+          That page isn&apos;t here.
+        </h1>
+        <p className="mx-auto mt-3 max-w-md text-[14px] leading-relaxed text-muted">
+          The job or page you&apos;re looking for doesn&apos;t exist, or you don&apos;t have access to it.
+        </p>
+        <Link href="/" className="btn btn-primary btn-sm mt-7">
+          <ArrowLeft size={15} aria-hidden="true" />
           Back to Today
         </Link>
       </div>

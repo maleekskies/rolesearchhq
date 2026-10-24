@@ -28,9 +28,9 @@ export type JobListItem = Pick<
 
 function scoreClass(score: number | null): string {
   if (score === null) return 'text-muted';
-  if (score >= 85) return 'text-good';
-  if (score >= 70) return 'grad-text';
-  return 'text-danger';
+  if (score >= 85) return 'text-accent';
+  if (score >= 70) return 'text-water';
+  return 'text-muted';
 }
 
 function companyMark(company: string): string {
@@ -97,26 +97,29 @@ export default function JobList({ jobs }: { jobs: JobListItem[] }) {
 
   if (jobs.length === 0) {
     return (
-      <p className="text-muted text-sm py-8 text-center border border-dashed border-border rounded-lg">
-        No matches yet. RoleSearchHQ scores roles against your titles and must-haves. Add a source or
-        wait for the next scan.
-      </p>
+      <div className="rounded-2xl border border-dashed border-border px-6 py-12 text-center">
+        <p className="mx-auto max-w-md text-[14px] leading-relaxed text-muted">
+          No matches yet. RoleSearchHQ scores roles against your titles and must-haves. Add a role by URL or
+          wait for the next scan.
+        </p>
+      </div>
     );
   }
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-3">
+      <div className="mb-3 flex items-center gap-3">
         {!selectMode ? (
           <button
             onClick={() => setSelectMode(true)}
-            className="text-xs text-muted hover:text-text border border-border rounded-full px-3 py-1"
+            className="rounded-full bg-white/[0.05] px-3.5 py-1.5 text-[12px] font-medium text-muted transition-colors hover:bg-white/[0.09] hover:text-text"
+            style={{ boxShadow: 'inset 0 0 0 1px rgb(var(--c-border))' }}
           >
             Select
           </button>
         ) : (
-          <div className="flex items-center gap-3 flex-wrap bg-surface border border-border rounded-lg px-4 py-2.5 w-full">
-            <label className="flex items-center gap-2 text-sm text-text cursor-pointer">
+          <div className="flex w-full flex-wrap items-center gap-3 rounded-2xl bg-surface px-4 py-2.5" style={{ boxShadow: 'inset 0 0 0 1px rgb(var(--c-border))' }}>
+            <label className="flex cursor-pointer items-center gap-2 text-[13px] text-text">
               <input
                 type="checkbox"
                 checked={selected.size === jobs.length}
@@ -130,33 +133,33 @@ export default function JobList({ jobs }: { jobs: JobListItem[] }) {
                 <button
                   onClick={() => runBulkAction('save')}
                   disabled={busy}
-                  className="text-xs text-good hover:underline disabled:opacity-50"
+                  className="text-[12px] font-semibold text-accent hover:underline disabled:opacity-50"
                 >
                   Save to pipeline
                 </button>
                 <button
                   onClick={() => runBulkAction('ignore')}
                   disabled={busy}
-                  className="text-xs text-muted hover:underline disabled:opacity-50"
+                  className="text-[12px] text-muted hover:text-text hover:underline disabled:opacity-50"
                 >
                   Ignore
                 </button>
                 <button
                   onClick={() => runBulkAction('reject')}
                   disabled={busy}
-                  className="text-xs text-danger hover:underline disabled:opacity-50"
+                  className="text-[12px] text-danger hover:underline disabled:opacity-50"
                 >
                   Reject
                 </button>
               </>
             )}
-            <button onClick={exitSelectMode} className="text-xs text-muted hover:text-text ml-auto">
+            <button onClick={exitSelectMode} className="ml-auto text-[12px] text-muted hover:text-text">
               Done
             </button>
           </div>
         )}
       </div>
-      {error && <p className="text-danger text-xs mb-3">{error}</p>}
+      {error && <p className="mb-3 text-[12px] text-danger">{error}</p>}
 
       <ul className="flex flex-col gap-2">
         {jobs.map((job) => {
@@ -171,7 +174,7 @@ export default function JobList({ jobs }: { jobs: JobListItem[] }) {
                   type="checkbox"
                   checked={isSelected}
                   onChange={() => toggle(job.id)}
-                  className="mt-6 accent-accent shrink-0"
+                  className="mt-6 shrink-0 accent-accent"
                   aria-label={`Select ${job.title}`}
                 />
               )}
@@ -183,35 +186,44 @@ export default function JobList({ jobs }: { jobs: JobListItem[] }) {
                     toggle(job.id);
                   }
                 }}
-                className={`flex-1 grid grid-cols-[52px_1fr_auto] gap-3 items-start bg-surface hover:bg-surfaceHover border rounded-lg px-4 py-4 transition-colors ${
-                  isSelected ? 'border-accent' : 'border-border'
+                className={`grid flex-1 grid-cols-[46px_1fr_auto] items-start gap-3 rounded-2xl px-4 py-4 transition-all duration-150 hover:-translate-y-px hover:bg-surfaceHover ${
+                  isSelected ? 'bg-accent/[0.06]' : 'bg-surface'
                 }`}
+                style={{
+                  boxShadow: isSelected
+                    ? 'inset 0 0 0 1px rgba(224,180,90,.55)'
+                    : 'inset 0 0 0 1px rgb(var(--c-border))',
+                }}
               >
-                <div className="w-[52px] h-[52px] rounded-lg bg-bg border border-border flex items-center justify-center text-accent font-semibold text-sm">
+                <div className="flex h-[46px] w-[46px] items-center justify-center rounded-[15px] bg-bg text-[13px] font-semibold text-accent ring-1 ring-inset ring-border">
                   {companyMark(job.company)}
                 </div>
 
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-text font-medium truncate">{job.title}</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="truncate text-[14.5px] font-semibold text-text">{job.title}</p>
                     {isDuplicate && (
-                      <span className="text-xs text-muted border border-border rounded-full px-2 py-0.5 shrink-0">
+                      <span className="shrink-0 rounded-full bg-white/[0.05] px-2 py-0.5 text-[10.5px] text-muted ring-1 ring-inset ring-border">
                         possible duplicate
                       </span>
                     )}
                   </div>
-                  <p className="text-muted text-xs flex flex-wrap gap-x-2 mt-0.5">
+                  <p className="mt-0.5 flex flex-wrap gap-x-2 text-[12px] text-muted">
                     <span>{job.company}</span>
                     {job.location && <span>· {job.location}</span>}
-                    {age && <span>· {age}</span>}
+                    {age && (
+                      <span suppressHydrationWarning>
+                        · {age}
+                      </span>
+                    )}
                   </p>
-                  {why && <p className="text-sm text-text/80 mt-2">{why}</p>}
+                  {why && <p className="mt-2 text-[13.5px] leading-relaxed text-text/80">{why}</p>}
                   {((job.fit_tags?.length ?? 0) > 0 || (job.match_gaps?.length ?? 0) > 0) && (
-                    <div className="flex flex-wrap gap-1.5 mt-2">
+                    <div className="mt-2 flex flex-wrap gap-1.5">
                       {job.fit_tags?.slice(0, 3).map((tag) => (
                         <span
                           key={`fit-${tag}`}
-                          className="text-xs text-good border border-good/30 bg-good/10 rounded-full px-2 py-0.5"
+                          className="rounded-full bg-accent/10 px-2 py-1 text-[10.5px] font-medium text-accent ring-1 ring-inset ring-accent/20"
                         >
                           {tag}
                         </span>
@@ -219,7 +231,7 @@ export default function JobList({ jobs }: { jobs: JobListItem[] }) {
                       {job.match_gaps?.slice(0, 2).map((tag) => (
                         <span
                           key={`gap-${tag}`}
-                          className="text-xs text-accent border border-accent/30 bg-accent/10 rounded-full px-2 py-0.5"
+                          className="rounded-full bg-water/10 px-2 py-1 text-[10.5px] font-medium text-water ring-1 ring-inset ring-water/20"
                         >
                           {tag}
                         </span>
@@ -228,15 +240,15 @@ export default function JobList({ jobs }: { jobs: JobListItem[] }) {
                   )}
                 </div>
 
-                <div className="text-right shrink-0">
+                <div className="shrink-0 text-right">
                   {job.match_score !== null &&
                     (job.domain_score === null &&
                     job.skills_score === null &&
                     job.seniority_score === null &&
                     job.location_score === null ? (
-                      <span className="text-xs text-muted">unscored</span>
+                      <span className="text-[11px] text-muted">unscored</span>
                     ) : (
-                      <span className={`text-xl font-display font-bold tabular-nums ${scoreClass(job.match_score)}`}>
+                      <span className={`inline-flex h-10 w-10 items-center justify-center rounded-full bg-bg text-[15px] font-bold tabular-nums ring-1 ring-inset ring-border ${scoreClass(job.match_score)}`}>
                         {job.match_score}
                       </span>
                     ))}

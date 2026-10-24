@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Link2 } from 'lucide-react';
 
 export default function ScoreUrlForm() {
   const router = useRouter();
@@ -33,24 +34,31 @@ export default function ScoreUrlForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2">
-      <input
-        type="url"
-        required
-        value={url}
-        onChange={(e) => setUrl(e.target.value)}
-        placeholder="Paste a job posting URL to score it instantly"
-        className="flex-1 bg-surface border border-border rounded px-3 py-2.5 text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent"
-      />
+    <form onSubmit={handleSubmit} className="flex flex-col gap-2 sm:flex-row">
+      <div className="relative min-w-0 flex-1">
+        <Link2
+          size={15}
+          className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted/60"
+          aria-hidden="true"
+        />
+        <input
+          type="url"
+          required
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="Paste a job posting URL to score it instantly"
+          className="field-input w-full py-2.5 pl-9 text-[13.5px]"
+        />
+      </div>
       <button
         type="submit"
         disabled={status === 'loading'}
-        className="bg-surface border border-border hover:border-accent text-text rounded px-4 py-2.5 text-sm transition-colors disabled:opacity-50 whitespace-nowrap"
+        className="btn btn-ghost btn-sm whitespace-nowrap disabled:opacity-50"
       >
         {status === 'loading' ? 'Scoring…' : 'Score this URL'}
       </button>
       {status === 'error' && errorMessage && (
-        <p className="text-danger text-xs sm:self-center">{errorMessage}</p>
+        <p className="text-[12px] text-danger sm:self-center">{errorMessage}</p>
       )}
     </form>
   );

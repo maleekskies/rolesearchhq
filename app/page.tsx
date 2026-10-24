@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 
 const DAILY_GOAL = 10;
 const COLUMNS =
-  'id, title, company, location, url, description, match_score, match_why, match_gaps, match_checks, posted_at, first_seen_at';
+  'id, title, company, location, url, description, match_score, match_why, match_gaps, match_checks, posted_at, first_seen_at, kits(status)';
 
 // Today: a short, finite list of your strongest unreviewed matches. How many
 // you review a day is capped (10, or more if you ask), so there is an end to it.
@@ -78,6 +78,7 @@ export default async function TodayPage({ searchParams }: { searchParams: { extr
     // Only a short excerpt is sent to the browser, not the whole description.
     excerpt: (j.description ?? '').replace(/\s+/g, ' ').trim().slice(0, 480),
     postedAt: j.posted_at ?? j.first_seen_at,
+    kitStatus: (j.kits as Array<{ status?: string }> | null)?.[0]?.status ?? null,
   }));
 
   const waiting = Math.max(0, (queueRes.count ?? 0) - jobs.length);
