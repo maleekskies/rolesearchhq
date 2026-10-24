@@ -93,7 +93,7 @@ export default function AddJobForm() {
           disabled={status === 'saving'}
           className="grad-bg text-bg font-medium rounded px-4 py-2.5 hover:opacity-90 transition-colors disabled:opacity-50"
         >
-          {status === 'saving' ? 'Adding…' : 'Add to inbox'}
+          {status === 'saving' ? 'Adding…' : 'Add to Today'}
         </button>
         <button
           type="button"

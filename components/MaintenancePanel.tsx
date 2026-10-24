@@ -108,7 +108,7 @@ export default function MaintenancePanel() {
         <p className="text-sm text-text mb-1">Re-score all jobs</p>
         <p className="text-xs text-muted mb-2">
           Applies your current target titles, must-haves, and deal-breakers to every job already in
-          the Inbox, not just new scans. Anything hitting a deal-breaker moves to Rejected.
+          the Today list, not just new scans. Anything hitting a deal-breaker moves to Rejected.
         </p>
         <button
           onClick={handleRescore}

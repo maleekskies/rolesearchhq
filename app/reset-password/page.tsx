@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import Brand from '@/components/Brand';
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
@@ -27,15 +28,26 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-bg px-6 py-16">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-bg px-6 py-16">
       <div className="w-full max-w-md">
+        <div className="mb-8">
+          <Brand showTagline />
+        </div>
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-accent">
+          Account recovery
+        </p>
         <h1 className="font-display text-3xl text-text mb-2">Choose a new password</h1>
         <p className="text-muted mb-6 text-sm">
-          You'll stay signed in to the same account, with all your jobs and progress.
+          You&apos;ll stay signed in to the same account, with all your jobs and progress.
         </p>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <label htmlFor="new-password" className="sr-only">
+            New password
+          </label>
           <input
+            id="new-password"
             type="password"
+            autoComplete="new-password"
             required
             minLength={6}
             placeholder="New password"
@@ -43,8 +55,13 @@ export default function ResetPasswordPage() {
             onChange={(e) => setPassword(e.target.value)}
             className="bg-surface border border-border rounded px-4 py-3 text-text placeholder:text-muted focus:outline-none focus:border-accent"
           />
+          <label htmlFor="confirm-password" className="sr-only">
+            Repeat new password
+          </label>
           <input
+            id="confirm-password"
             type="password"
+            autoComplete="new-password"
             required
             minLength={6}
             placeholder="Repeat new password"
@@ -59,9 +76,13 @@ export default function ResetPasswordPage() {
           >
             {busy ? 'Saving...' : 'Save new password'}
           </button>
-          {error && <p className="text-danger text-sm">{error}</p>}
+          {error && (
+            <p role="alert" className="text-danger text-sm">
+              {error}
+            </p>
+          )}
         </form>
       </div>
-    </main>
+    </div>
   );
 }

@@ -7,10 +7,16 @@ export const metadata: Metadata = {
     canonical: 'https://rolesearchhq.vercel.app/login',
   },
   openGraph: {
+    type: 'website',
+    siteName: 'RoleSearchHQ',
     title: 'RoleSearchHQ',
     description: 'Roles scored against your profile. Nothing sends until you say so.',
     url: 'https://rolesearchhq.vercel.app/login',
-    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'RoleSearchHQ',
+    description: 'Roles scored against your profile. Nothing sends until you say so.',
   },
 };
 

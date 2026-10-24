@@ -32,7 +32,7 @@ export default async function KitStudioPage({
 
         {!recentKits || recentKits.length === 0 ? (
           <p className="text-muted text-sm border border-dashed border-border rounded-lg p-6 text-center">
-            Pick a match from Inbox. RoleSearchHQ will draft a kit for that role only.
+            Pick a match from Today. RoleSearchHQ will draft a kit for that role only.
           </p>
         ) : (
           <ul className="flex flex-col gap-2">
@@ -78,7 +78,7 @@ export default async function KitStudioPage({
       <div className="max-w-2xl px-6 py-10 pb-24 md:pb-10">
         <h1 className="font-display text-3xl text-text mb-1">Kit Studio</h1>
         <p className="text-muted text-sm border border-dashed border-border rounded-lg p-6 text-center mt-8">
-          No kit found for that role yet. Open it from the Inbox and generate one first.
+          No kit found for that role yet. Open it from Today and generate one first.
         </p>
       </div>
     );

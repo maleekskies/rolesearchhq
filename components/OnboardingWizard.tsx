@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import ChipInput from './ChipInput';
+import Brand from '@/components/Brand';
 
 const TOTAL_STEPS = 4;
 
@@ -63,6 +64,9 @@ export default function OnboardingWizard({ userId }: { userId: string }) {
 
   return (
     <div className="w-full max-w-lg">
+      <div className="mb-10 md:hidden">
+        <Brand showTagline />
+      </div>
       <p className="text-xs text-muted mb-2">
         Step {step} of {TOTAL_STEPS}
       </p>
@@ -74,7 +78,7 @@ export default function OnboardingWizard({ userId }: { userId: string }) {
       </div>
 
       {step === 1 && (
-        <StepShell title="What roles are you hunting?" hint="Add 2 to 5 target titles.">
+        <StepShell title="What roles are you targeting?" hint="Add 2 to 5 target titles.">
           <ChipInput
             values={targetTitles}
             onChange={setTargetTitles}

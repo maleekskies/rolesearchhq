@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Brand from '@/components/Brand';
 
 export const metadata: Metadata = { title: 'Terms of Use' };
 
@@ -9,10 +10,13 @@ const CONTACT = process.env.NEXT_PUBLIC_CONTACT_EMAIL;
 
 export default function TermsPage() {
   return (
-    <main className="min-h-screen bg-bg px-6 py-12">
+    <div className="min-h-screen bg-bg px-6 py-12">
       <article className="max-w-2xl mx-auto text-sm text-muted leading-relaxed">
-        <Link href="/" className="text-accent text-xs">← Back to RoleSearchHQ</Link>
-        <h1 className="font-display text-3xl text-text mt-4 mb-1">Terms of Use</h1>
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+          <Brand compact />
+          <Link href="/" className="text-accent text-xs">← Back to Today</Link>
+        </div>
+        <h1 className="font-display text-3xl text-text mb-1">Terms of Use</h1>
         <p className="mb-8">Last updated: October 14, 2026</p>
 
         <Section title="The service">
@@ -62,7 +66,7 @@ export default function TermsPage() {
           )}
         </Section>
       </article>
-    </main>
+    </div>
   );
 }
 

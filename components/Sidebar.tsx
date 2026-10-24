@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Inbox as InboxIcon, Kanban, FileText, Settings as SettingsIcon } from 'lucide-react';
 import AccountBar from '@/components/AccountBar';
+import Brand from '@/components/Brand';
 
 const NAV_ITEMS = [
   { href: '/', label: 'Today', icon: InboxIcon },
@@ -26,7 +27,9 @@ export default function Sidebar() {
     <>
       {/* Desktop: left rail, no border box, active item marked by a gradient bar */}
       <nav className="hidden md:flex flex-col w-56 shrink-0 px-4 py-6 gap-1">
-        <div className="font-display font-bold text-xl grad-text mb-8 px-2">RoleSearchHQ</div>
+        <div className="mb-8 px-2">
+          <Brand compact showTagline />
+        </div>
         {NAV_ITEMS.map((item) => {
           const active = (pending ?? pathname) === item.href;
           return (
