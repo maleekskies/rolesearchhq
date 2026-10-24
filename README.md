@@ -11,10 +11,10 @@ Live at: https://rolesearchhq.vercel.app
 ## What it actually does
 
 - **Onboarding**: a four-step setup (target titles, locations, must-haves and
-  deal-breakers, master CV) before the Inbox has anything to show.
+  deal-breakers, master CV) before the Today list has anything to show.
 - **Today** (home): a short, finite list of your strongest unreviewed matches, 10 a day (ask for 10 more when you want them). Split view with the reasons it's here, one-tap Save / Skip / Not for me, a "What was dropped?" panel, and a follow-up banner. Keys: J/K move, S save, X skip. Light and dark themes (follows your device, switchable in the sidebar or Settings).
 - **All matches** (`/all`): the full searchable, sortable list with bulk actions, paste-a-link and add-a-job. (Previously called the Inbox.)
-- **Inbox**: scans RemoteOK, Remotive, Himalayas, Arbeitnow, Jobicy, and
+- **Scanning**: pulls from RemoteOK, Remotive, Himalayas, Arbeitnow, Jobicy, and
   Adzuna, or scores a single pasted job URL instantly. Every row shows a
   score, a one-sentence reason, and fit/gap tags. Sortable by recency or
   score, searchable, with bulk select for Save/Ignore/Reject. Duplicate
@@ -137,8 +137,8 @@ The scan drops a listing, instead of just ranking it lower, when it is strict ab
 - **Language:** set "Languages I speak" in Settings (default English). Listings that require another language ("fluent German", "French-speaking", "Deutsch C1", a German job title) are dropped, and so are listings written in another language. "German is a plus" only lowers the score by 10.
 - **On-site / hybrid:** dropped unless the place is one of your Locations or your home location.
 - **Region-locked remote:** "Remote - USA only", "must be based in the EU", "authorized to work in the US" are dropped. Worldwide, Anywhere, Africa, EMEA and Nigeria pass.
-- **Cutoff:** the scan only stores jobs at or above your Min match cutoff, and the Inbox opens at that cutoff ("Show everything" lifts it). Jobs you've saved or applied to are never hidden by it.
-- Each scan reports how many it dropped and why. "Re-score all" in Settings applies the same rules to jobs already in your Inbox.
+- **Cutoff:** the scan only stores jobs at or above your Min match cutoff, and Today opens at that cutoff ("Show everything" lifts it). Jobs you've saved or applied to are never hidden by it.
+- Each scan reports how many it dropped and why. "Re-score all" in Settings applies the same rules to jobs already in Today.
 
 If you upgrade an existing project, run the `alter table profile add column languages` statement at the bottom of `supabase/schema.sql` in the Supabase SQL editor before deploying.
 

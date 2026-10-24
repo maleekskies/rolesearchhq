@@ -19,7 +19,7 @@ export default function PrivacyPage() {
           <Link href="/" className="text-accent text-xs">← Back to Today</Link>
         </div>
         <h1 className="font-display text-3xl text-text mb-1">Privacy Policy</h1>
-        <p className="mb-8">Last updated: October 14, 2026</p>
+        <p className="mb-8">Last updated: October 24, 2026</p>
 
         <Section title="What RoleSearchHQ is">
           RoleSearchHQ is a personal job-search tool. It scores public job listings against the profile you
