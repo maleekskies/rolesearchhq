@@ -15,7 +15,7 @@ const linkClass =
 
 export default function PrivacyPage() {
   return (
-    <LegalPage title="Privacy Policy" updated="October 24, 2026">
+    <LegalPage title="Privacy Policy" updated="October 26, 2026">
       <LegalSection title="What RoleSearchHQ is">
         RoleSearchHQ is a personal job-search tool. It scores public job listings against the profile you enter and
         helps you prepare application material. It never applies to anything on your behalf.
@@ -30,9 +30,16 @@ export default function PrivacyPage() {
           </li>
           <li>Jobs in your Today list and pipeline, their scores, notes, dates, and the kits you generate.</li>
           <li>Which roles you rejected and why, and simple daily usage counters that enforce fair-use limits.</li>
+          <li>
+            Aggregated page-view and performance data through Vercel Web Analytics and Speed Insights, such as
+            the pages visited, referring page, device and browser type, approximate region, and page load
+            timings.
+          </li>
         </ul>
         <p className="mt-3">
-          We do not use advertising or analytics trackers. The only cookies are the ones that keep you signed in.
+          We use privacy-friendly, aggregated analytics and performance monitoring from Vercel. Those tools do
+          not use cookies, do not receive your CV or profile content, and are not used for advertising or
+          cross-site tracking. The only cookies are the ones that keep you signed in.
         </p>
       </LegalSection>
 
@@ -48,7 +55,7 @@ export default function PrivacyPage() {
             Supabase: stores your account and data (database hosted in Ireland, EU West) and sends account emails
             such as password resets.
           </li>
-          <li>Vercel: hosts the app.</li>
+          <li>Vercel: hosts the app and provides aggregated analytics and performance monitoring.</li>
           <li>
             Groq: when you generate a kit, the relevant parts of your CV, profile and the job description are sent
             to Groq to produce the text. This is the only third party that sees your CV content.

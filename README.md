@@ -56,6 +56,7 @@ Live at: https://rolesearchhq.vercel.app
 - `@react-pdf/renderer` for ATS-safe single-column PDF export.
 - `pdf-parse` for extracting text from an uploaded CV PDF.
 - Resend for the daily digest email.
+- Vercel Web Analytics and Speed Insights for aggregated page and performance monitoring (no cookies, no CV content).
 
 ## Setup
 
@@ -108,6 +109,14 @@ actually needs to be set this time, not left optional.
 `vercel.json` schedules the digest at 8am UTC, after the automated scan
 (below) has had a chance to run, so there's something fresh to report.
 
+### Analytics and performance
+
+The root layout mounts Vercel Web Analytics and Speed Insights. There are no
+extra environment variables, but both need to be enabled once for the project
+in the Vercel dashboard (Project → Analytics). They provide aggregated page
+views and Core Web Vitals without cookies or access to profile/CV content. The
+privacy page discloses this collection.
+
 ### Automated scanning (3x/day)
 
 Vercel's Hobby plan caps cron at once a day, so scanning is triggered from outside:
@@ -126,6 +135,7 @@ The job boards are downloaded once per call and shared by every user in the batc
 - [ ] In Supabase, Authentication → URL Configuration, add `https://YOUR-APP-URL/auth/callback` to Redirect URLs (the password-reset link lands there).
 - [ ] Resend domain is also needed for the daily digest: verify it and set `RESEND_FROM`.
 - [ ] Set `NEXT_PUBLIC_APP_URL` and `NEXT_PUBLIC_CONTACT_EMAIL`; have the Privacy and Terms pages reviewed (they are templates that match what the app does today).
+- [ ] Enable Web Analytics and Speed Insights in the Vercel project dashboard.
 - [ ] Run `supabase/schema.sql` additions (languages column, `usage_daily` and `bump_usage`).
 - [ ] Keep personal files (`profile.md`, `cv.pdf`) out of the repo; `.gitignore` covers them.
 - [ ] Watch Groq and Adzuna usage; per-user daily limits live in `lib/limits.ts`.
