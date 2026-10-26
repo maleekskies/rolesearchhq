@@ -2,9 +2,13 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { getSharedSources, type NormalizedJob, type ScanSourceResult } from '@/lib/scan/sources';
 import { computeMatch, isExcludedCompany, applyTeachingPenalty, type RecentRejection } from '@/lib/scan/score';
 import { makeFingerprint, makeLegacyFingerprint } from '@/lib/scan/fingerprint';
+import { hasJobCrm, readJobCrm, withJobCrm } from '@/lib/job-crm';
 
 const MAX_JOBS_PER_SCAN = 100;
-const MAX_LISTING_AGE_DAYS = 7;
+// Fourteen days catches listings that boards publish or refresh slowly while
+// still keeping the map recent. Seven days was dropping a lot of still-open
+// roles simply because the board had not touched the posting recently.
+const MAX_LISTING_AGE_DAYS = 14;
 
 function isWithinRecencyWindow(postedAt: string | null): boolean {
   if (!postedAt) return true; // can't verify age, don't drop it over a missing field
@@ -36,6 +40,15 @@ export interface DropCounts {
   tooOld: number;
   duplicate: number;
 }
+
+export interface DroppedExample {
+  title: string;
+  company: string;
+  url: string;
+  score?: number;
+}
+
+export type DroppedExamples = Partial<Record<keyof DropCounts, DroppedExample[]>>;
 
 export interface ScanResult {
   found: number;
@@ -119,7 +132,10 @@ export async function runScanForUser(
     .limit(50);
   const rejections: RecentRejection[] = recentRejections ?? [];
 
-  const sourceResults = sharedSources ?? (await getSharedSources());
+  // Manual scans search with the user's first target title. The automated
+  // cron passes a shared, generic source list instead so it can scan many
+  // users from one set of board requests.
+  const sourceResults = sharedSources ?? (await getSharedSources(undefined, targetTitles));
   const sourceErrors = sourceResults.filter((r) => r.error).map((r) => `${r.source}: ${r.error}`);
   const dbErrors: string[] = [];
 
@@ -133,15 +149,30 @@ export async function runScanForUser(
     tooOld: 0,
     duplicate: 0,
   };
+  const droppedExamples: DroppedExamples = {};
+  const recordDrop = (reason: keyof DropCounts, job: NormalizedJob, score?: number) => {
+    const examples = droppedExamples[reason] ?? [];
+    if (examples.length < 3) {
+      examples.push({
+        title: job.title,
+        company: job.company,
+        url: job.url,
+        ...(typeof score === 'number' ? { score } : {}),
+      });
+      droppedExamples[reason] = examples;
+    }
+  };
 
   const scoredWithDupes: ScoredJob[] = [];
   for (const j of sourceResults.flatMap((r) => r.jobs)) {
     if (isExcludedCompany(j.company, excludeCompanies)) {
       dropped.excludedCompany += 1;
+      recordDrop('excludedCompany', j);
       continue;
     }
     if (!isWithinRecencyWindow(j.posted_at)) {
       dropped.tooOld += 1;
+      recordDrop('tooOld', j);
       continue;
     }
 
@@ -158,16 +189,23 @@ export async function runScanForUser(
     );
 
     if (rawMatch.hardExcluded) {
-      if (rawMatch.excludeReason === 'language') dropped.language += 1;
-      else if (rawMatch.excludeReason === 'onsite') dropped.onsite += 1;
-      else if (rawMatch.excludeReason === 'location') dropped.location += 1;
-      else dropped.dealBreaker += 1;
+      const reason: keyof DropCounts =
+        rawMatch.excludeReason === 'language'
+          ? 'language'
+          : rawMatch.excludeReason === 'onsite'
+            ? 'onsite'
+            : rawMatch.excludeReason === 'location'
+              ? 'location'
+              : 'dealBreaker';
+      dropped[reason] += 1;
+      recordDrop(reason, j);
       continue;
     }
 
     const match = applyTeachingPenalty(rawMatch, j.title, j.company, rejections);
     if (match.score < minMatch) {
       dropped.lowScore += 1;
+      recordDrop('lowScore', j, match.score);
       continue;
     }
 
@@ -201,15 +239,21 @@ export async function runScanForUser(
   const byPrint = new Map<string, ScoredJob>();
   for (const j of Array.from(seen.values()).sort((x, y) => y.match_score - x.match_score)) {
     const fp = makeFingerprint(j.title, j.company);
-    if (byPrint.has(fp)) dropped.duplicate += 1;
-    else byPrint.set(fp, j);
+    if (byPrint.has(fp)) {
+      dropped.duplicate += 1;
+      recordDrop('duplicate', j);
+    } else {
+      byPrint.set(fp, j);
+    }
   }
   const scored = Array.from(byPrint.values()).slice(0, MAX_JOBS_PER_SCAN);
 
   if (scored.length === 0) {
     await supabase
       .from('profile')
-      .update({ last_scan: { at: new Date().toISOString(), inserted: 0, minMatch, dropped } })
+      .update({
+        last_scan: { at: new Date().toISOString(), inserted: 0, minMatch, dropped, droppedExamples },
+      })
       .eq('id', userId);
     return {
       found: 0,
@@ -228,7 +272,9 @@ export async function runScanForUser(
   const saveLastScan = async (inserted: number) => {
     await supabase
       .from('profile')
-      .update({ last_scan: { at: new Date().toISOString(), inserted, minMatch, dropped } })
+      .update({
+        last_scan: { at: new Date().toISOString(), inserted, minMatch, dropped, droppedExamples },
+      })
       .eq('id', userId);
   };
 
@@ -238,11 +284,11 @@ export async function runScanForUser(
     return out;
   };
 
-  const existing: { id: string; source: string; source_id: string }[] = [];
+  const existing: { id: string; source: string; source_id: string; raw_json: unknown }[] = [];
   for (const ids of chunk(scored.map((j) => j.source_id), 100)) {
     const { data, error } = await supabase
       .from('jobs')
-      .select('id, source, source_id')
+      .select('id, source, source_id, raw_json')
       .eq('user_id', userId)
       .in('source_id', ids);
     if (error) {
@@ -271,6 +317,7 @@ export async function runScanForUser(
 
   const existingKey = new Set(existing.map((e) => `${e.source}:${e.source_id}`));
   const existingIdByKey = new Map(existing.map((e) => [`${e.source}:${e.source_id}`, e.id]));
+  const existingRawById = new Map(existing.map((e) => [e.id, e.raw_json]));
 
   const toUpdate = scored.filter((j) => existingKey.has(`${j.source}:${j.source_id}`));
   const toInsert = scored.filter((j) => {
@@ -278,7 +325,10 @@ export async function runScanForUser(
     const seenBefore =
       knownPrints.has(makeFingerprint(j.title, j.company)) ||
       knownPrints.has(makeLegacyFingerprint(j.title, j.company));
-    if (seenBefore) dropped.duplicate += 1;
+    if (seenBefore) {
+      dropped.duplicate += 1;
+      recordDrop('duplicate', j);
+    }
     return !seenBefore;
   });
 
@@ -320,6 +370,10 @@ export async function runScanForUser(
     const updates = await Promise.allSettled(
       toUpdate.map(async (j) => {
         const id = existingIdByKey.get(`${j.source}:${j.source_id}`);
+        // The board refresh must not erase application details the user added
+        // to raw_json. Carry the CRM object across if one exists.
+        const existingCrm = readJobCrm(id ? existingRawById.get(id) : null);
+        const rawJson = hasJobCrm(existingCrm) ? withJobCrm(j.raw_json, existingCrm) : j.raw_json;
         const { error } = await supabase
           .from('jobs')
           .update({
@@ -328,7 +382,7 @@ export async function runScanForUser(
             location: j.location,
             url: j.url,
             description: j.description,
-            raw_json: j.raw_json,
+            raw_json: rawJson,
             posted_at: j.posted_at,
             match_score: j.match_score,
             match_why: [j.match_why],

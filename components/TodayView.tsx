@@ -27,11 +27,19 @@ export interface FollowUp {
   next_date: string;
   next_action: string | null;
 }
+export interface DroppedExample {
+  title: string;
+  company: string;
+  url: string;
+  score?: number;
+}
+
 export interface LastScan {
   at: string;
   inserted: number;
   minMatch: number;
   dropped: Record<string, number>;
+  droppedExamples?: Record<string, DroppedExample[]>;
 }
 
 type Mark = 'Saved' | 'Skipped';
@@ -345,12 +353,14 @@ function DropSheet({
 
         <p className="mt-2 text-sm leading-relaxed text-muted">
           These never reached your map. You only see what cleared your filters and your{' '}
-          {minMatch} cutoff — {droppedTotal} filtered this time.
+          {minMatch} cutoff — {droppedTotal} filtered this time. A few examples show what landed in each
+          bucket, so you can spot a filter that is too tight.
         </p>
 
         <div className="mt-6 flex flex-col gap-4">
           {DROP_ROWS.map(([key, label]) => {
             const count = lastScan.dropped?.[key] ?? 0;
+            const examples = lastScan.droppedExamples?.[key] ?? [];
             return (
               <div key={key}>
                 <div className="flex items-baseline justify-between gap-4 text-[13.5px]">
@@ -363,12 +373,48 @@ function DropSheet({
                     style={{ width: `${Math.min(100, (count / maxDrop) * 100)}%` }}
                   />
                 </div>
+                {examples.length > 0 && (
+                  <ul className="mt-2 flex flex-col gap-1.5 border-l border-border pl-3">
+                    {examples.map((example, index) => (
+                      <li
+                        key={`${key}-example-${index}`}
+                        className="flex items-start justify-between gap-3 text-[11.5px] leading-snug"
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate text-text/80">{example.title}</span>
+                          <span className="block truncate text-muted/75">
+                            {example.company}
+                            {typeof example.score === 'number' ? ` · ${example.score} match` : ''}
+                          </span>
+                        </span>
+                        <a
+                          href={example.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="shrink-0 font-semibold text-water hover:text-text"
+                        >
+                          Open
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             );
           })}
         </div>
 
-        <button type="button" onClick={onClose} className="btn btn-ghost btn-sm mt-6 w-full">
+        <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] text-muted">
+          <Link href="/settings" onClick={onClose} className="font-semibold text-accent hover:underline">
+            Adjust filters in Settings
+          </Link>
+          <span className="text-muted/40">·</span>
+          <Link href="/all?minScore=0" onClick={onClose} className="font-semibold text-water hover:underline">
+            Browse every match
+          </Link>
+        </div>
+
+        <button type="button" onClick={onClose} className="btn btn-ghost btn-sm mt-4 w-full">
           Back to the map
         </button>
       </div>

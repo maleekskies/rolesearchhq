@@ -13,6 +13,8 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import ApplicationTracker from '@/components/ApplicationTracker';
+import { hasJobCrm, readJobCrm } from '@/lib/job-crm';
 import type { Job, Kit } from '@/lib/types';
 
 const STATUSES = ['new', 'saved', 'kit_ready', 'applied', 'interview', 'rejected', 'offer', 'ignored'];
@@ -45,6 +47,8 @@ export default function JobDetail({ job, kit }: { job: Job; kit: Kit | null }) {
   const [showUndo, setShowUndo] = useState(false);
   const [interviewNotes, setInterviewNotes] = useState(job.interview_notes ?? '');
   const [notesStatus, setNotesStatus] = useState<'idle' | 'saving' | 'error'>('idle');
+  const showApplicationTracker =
+    hasJobCrm(readJobCrm(job.raw_json)) || !['new', 'ignored'].includes(job.status);
 
   async function handleGenerate() {
     setGenerating(true);
@@ -287,10 +291,16 @@ export default function JobDetail({ job, kit }: { job: Job; kit: Kit | null }) {
           </button>
         )}
         {kit && (
-          <a href={`/api/jobs/${job.id}/pdf`} className="btn btn-ghost btn-sm">
-            <Download size={15} aria-hidden="true" />
-            Download CV
-          </a>
+          <>
+            <a href={`/api/jobs/${job.id}/pdf`} className="btn btn-ghost btn-sm">
+              <Download size={15} aria-hidden="true" />
+              Download CV
+            </a>
+            <Link href={`/kit-studio?job=${job.id}`} className="btn btn-ghost btn-sm">
+              <PencilLine size={15} aria-hidden="true" />
+              Edit kit
+            </Link>
+          </>
         )}
         {!showRejectForm ? (
           <button
@@ -506,6 +516,8 @@ export default function JobDetail({ job, kit }: { job: Job; kit: Kit | null }) {
               </button>
             </div>
           </section>
+
+          {showApplicationTracker && <ApplicationTracker job={job} />}
 
           {kit && (
             <section className="rounded-2xl bg-surface p-4" style={{ boxShadow: 'inset 0 0 0 1px rgb(var(--c-border))' }}>

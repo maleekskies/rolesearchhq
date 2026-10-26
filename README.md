@@ -15,19 +15,25 @@ Live at: https://rolesearchhq.vercel.app
 - **Today** (home): a short, finite list of your strongest unreviewed matches, 10 a day (ask for 10 more when you want them). Split view with the reasons it's here, one-tap Save / Skip / Not for me, a "What was dropped?" panel, and a follow-up banner. Keys: J/K move, S save, X skip. Light and dark themes (follows your device, switchable in the sidebar or Settings).
 - **All matches** (`/all`): the full searchable, sortable list with bulk actions, paste-a-link and add-a-job. (Previously called the Inbox.)
 - **Scanning**: pulls from RemoteOK, Remotive, Himalayas, Arbeitnow, Jobicy, and
-  Adzuna, or scores a single pasted job URL instantly. Every row shows a
-  score, a one-sentence reason, and fit/gap tags. Sortable by recency or
-  score, searchable, with bulk select for Save/Ignore/Reject. Duplicate
-  postings from different boards are flagged, not merged. Untouched listings
-  auto-archive after 30 days.
+  Adzuna, or scores a single pasted job URL instantly. Manual scans ask the
+  search-capable boards for your first target title; the scheduled scan stays
+  broad so one board response can serve every user. Listed roles are capped to
+  the last 14 days. Every row shows a score, a one-sentence reason, and
+  fit/gap tags. Sortable by recency or score, searchable, with bulk select for
+  Save/Ignore/Reject. Duplicate postings from different boards are flagged, not
+  merged. Untouched listings auto-archive after 30 days.
 - **Job detail**: score breakdown (domain, skills, seniority, location),
-  a next-action/date field, Approve kit / Save to pipeline / Reject-with-reason
-  actions. Rejecting softly downranks similar roles for 14 days.
+  a next-action/date field, application details (applied date, salary, contact,
+  deadline), Approve kit / Save to pipeline / Reject-with-reason actions.
+  Rejecting softly downranks similar roles for 14 days.
 - **Pipeline**: a 4-column board (Saved, Ready to send, Applied, Interview).
   Applied requires a follow-up date; Interview cards show the date and any
-  prep notes.
+  prep notes. Applied and interview cards also show the saved application
+  details.
 - **Kit Studio**: the per-role kit (tailored CV, cover letter, talking
-  points, gap-handling note) with a draft/needs-edit/approved status.
+  points, form answers, gap-handling note) with a draft/needs-edit/approved
+  status. Every part is editable; saving changes creates a new draft and
+  resets approval.
 - **Settings**: target titles, locations, must-haves, deal-breakers, min
   match cutoff, seniority, master CV (paste or upload a PDF), voice guide,
   proof points, and a maintenance panel (re-score all jobs against current
@@ -148,7 +154,7 @@ The scan drops a listing, instead of just ranking it lower, when it is strict ab
 - **On-site / hybrid:** dropped unless the place is one of your Locations or your home location.
 - **Region-locked remote:** "Remote - USA only", "must be based in the EU", "authorized to work in the US" are dropped. Worldwide, Anywhere, Africa, EMEA and Nigeria pass.
 - **Cutoff:** the scan only stores jobs at or above your Min match cutoff, and Today opens at that cutoff ("Show everything" lifts it). Jobs you've saved or applied to are never hidden by it.
-- Each scan reports how many it dropped and why. "Re-score all" in Settings applies the same rules to jobs already in Today.
+- Each scan reports how many it dropped, why, and up to three example listings per reason, each with a link back to the original post. "Re-score all" in Settings applies the same rules to jobs already in Today.
 
 If you upgrade an existing project, run the `alter table profile add column languages` statement at the bottom of `supabase/schema.sql` in the Supabase SQL editor before deploying.
 

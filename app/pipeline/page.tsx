@@ -4,9 +4,18 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { ArrowUpRight, CalendarClock, Kanban } from 'lucide-react';
+import { readJobCrm } from '@/lib/job-crm';
 
 export const metadata: Metadata = { title: 'Pipeline' };
 export const dynamic = 'force-dynamic';
+
+function shortDate(value: string): string {
+  return new Date(value).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
+}
 
 const COLUMNS = [
   { status: 'saved', label: 'Saved', dot: 'bg-muted', empty: 'Save a role from Today and it will wait here.' },
@@ -24,7 +33,7 @@ export default async function PipelinePage() {
   // lookup that had to wait for the first.
   const { data: jobs } = await supabase
     .from('jobs')
-    .select('id, title, company, status, match_score, next_action, next_date, interview_at, interview_notes, updated_at, kits(status)')
+    .select('id, title, company, status, match_score, next_action, next_date, interview_at, interview_notes, raw_json, updated_at, kits(status)')
     .eq('user_id', userId)
     .in('status', COLUMNS.map((c) => c.status))
     .order('updated_at', { ascending: false });
@@ -105,6 +114,7 @@ export default async function PipelinePage() {
               <div className="flex flex-col gap-2">
                 {columnJobs.map((job) => {
                   const kitStatus = kitStatusByJob.get(job.id);
+                  const crm = readJobCrm(job.raw_json);
                   return (
                     <Link
                       key={job.id}
@@ -144,6 +154,22 @@ export default async function PipelinePage() {
                       )}
                       {job.status === 'applied' && !job.next_date && (
                         <p className="mt-2.5 text-[11.5px] font-medium text-danger">No follow-up date set</p>
+                      )}
+                      {(job.status === 'applied' || job.status === 'interview') && crm.appliedAt && (
+                        <p className="mt-1.5 text-[11.5px] text-muted">Applied {shortDate(crm.appliedAt)}</p>
+                      )}
+                      {crm.deadline && (
+                        <p className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-muted">
+                          <CalendarClock size={12} aria-hidden="true" />
+                          Deadline {shortDate(crm.deadline)}
+                        </p>
+                      )}
+                      {(crm.salary || crm.contact) && (
+                        <p className="mt-1.5 truncate text-[11.5px] text-muted">
+                          {crm.salary ? `Salary ${crm.salary}` : ''}
+                          {crm.salary && crm.contact ? ' · ' : ''}
+                          {crm.contact ? `Contact ${crm.contact}` : ''}
+                        </p>
                       )}
                       {job.next_action && job.status !== 'applied' && (
                         <p className="mt-1.5 truncate text-[11.5px] text-muted">{job.next_action}</p>

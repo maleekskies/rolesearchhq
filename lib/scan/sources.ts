@@ -38,6 +38,20 @@ function stripHtml(html: string | undefined | null): string {
   return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+function unixSecondsToIso(value: unknown): string | null {
+  const seconds = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN;
+  if (!Number.isFinite(seconds)) return null;
+  return new Date(seconds * 1000).toISOString();
+}
+
+function himalayasLocation(value: unknown): string {
+  if (!Array.isArray(value) || value.length === 0) return 'Remote';
+  const names = value
+    .map((part) => (typeof part === 'string' ? part : (part as { name?: string } | null)?.name))
+    .filter((name): name is string => Boolean(name));
+  return names.length ? `Remote - ${names.join(', ')}` : 'Remote';
+}
+
 // --- RemoteOK ---------------------------------------------------------
 // Requires a real User-Agent or it blocks the request. First array item is
 // a legal notice, not a job, skip anything without an `id`.
@@ -64,9 +78,24 @@ async function fetchRemoteOK(): Promise<NormalizedJob[]> {
     }));
 }
 
+// A target title like "Technical Writer (Web3 / crypto)" is too noisy for a
+// board search box. Use the readable title before parentheses or slash
+// alternatives. The full title still drives scoring later.
+function primaryTargetQuery(query?: string | null): string {
+  return (query ?? '')
+    .replace(/\([^)]*\)/g, ' ')
+    .split('/')[0]
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 // --- Remotive -----------------------------------------------------------
-async function fetchRemotive(): Promise<NormalizedJob[]> {
-  const res = await fetchWithTimeout('https://remotive.com/api/remote-jobs?limit=100');
+async function fetchRemotive(query?: string): Promise<NormalizedJob[]> {
+  const search = primaryTargetQuery(query);
+  const url = `https://remotive.com/api/remote-jobs?limit=100${
+    search ? `&search=${encodeURIComponent(search)}` : ''
+  }`;
+  const res = await fetchWithTimeout(url);
   if (!res.ok) throw new Error(`Remotive ${res.status}`);
   const data = await res.json();
   const jobs = data.jobs;
@@ -87,9 +116,14 @@ async function fetchRemotive(): Promise<NormalizedJob[]> {
 
 // --- Himalayas ------------------------------------------------------------
 // Field names aren't fully pinned down publicly, so map defensively with
-// fallbacks rather than assuming one exact schema.
-async function fetchHimalayas(): Promise<NormalizedJob[]> {
-  const res = await fetchWithTimeout('https://himalayas.app/jobs/api?limit=100');
+// fallbacks rather than assuming one exact schema. The search endpoint is
+// limited to 20 results, but those are relevant to the target title.
+async function fetchHimalayas(query?: string): Promise<NormalizedJob[]> {
+  const search = primaryTargetQuery(query);
+  const url = search
+    ? `https://himalayas.app/jobs/api/search?q=${encodeURIComponent(search)}&limit=20`
+    : 'https://himalayas.app/jobs/api?limit=100';
+  const res = await fetchWithTimeout(url);
   if (!res.ok) throw new Error(`Himalayas ${res.status}`);
   const data = await res.json();
   const jobs = Array.isArray(data) ? data : data.jobs;
@@ -138,8 +172,13 @@ async function fetchArbeitnow(): Promise<NormalizedJob[]> {
 }
 
 // --- Jobicy ---------------------------------------------------------------
-async function fetchJobicy(): Promise<NormalizedJob[]> {
-  const res = await fetchWithTimeout('https://jobicy.com/api/v2/remote-jobs?count=100');
+async function fetchJobicy(query?: string): Promise<NormalizedJob[]> {
+  // Jobicy accepts a 3-50 character `tag` keyword query.
+  const tag = primaryTargetQuery(query).slice(0, 50);
+  const url = `https://jobicy.com/api/v2/remote-jobs?count=100${
+    tag.length >= 3 ? `&tag=${encodeURIComponent(tag)}` : ''
+  }`;
+  const res = await fetchWithTimeout(url);
   if (!res.ok) throw new Error(`Jobicy ${res.status}`);
   const data = await res.json();
   const jobs = data.jobs;
@@ -165,7 +204,10 @@ async function fetchJobicy(): Promise<NormalizedJob[]> {
 // (50 results) rather than paginating, and skips cleanly if no key is set.
 // Country defaults to 'us' since that's where most remote-friendly listings
 // concentrate on Adzuna; it doesn't cover every market (no Nigeria feed).
-async function fetchAdzuna(): Promise<NormalizedJob[]> {
+// A manual scan passes the first target title as `what` so the page is about
+// the work the user actually wants. The daily cron keeps the broad page so it
+// can share one response across every user in the batch.
+async function fetchAdzuna(query?: string): Promise<NormalizedJob[]> {
   const appId = process.env.ADZUNA_APP_ID;
   const appKey = process.env.ADZUNA_APP_KEY;
   if (!appId || !appKey) {
@@ -173,7 +215,15 @@ async function fetchAdzuna(): Promise<NormalizedJob[]> {
   }
 
   const country = 'us';
-  const url = `https://api.adzuna.com/v1/api/jobs/${country}/search/1?app_id=${appId}&app_key=${appKey}&results_per_page=50&content-type=application/json`;
+  const search = primaryTargetQuery(query);
+  const params = new URLSearchParams({
+    app_id: appId,
+    app_key: appKey,
+    results_per_page: '50',
+    'content-type': 'application/json',
+  });
+  if (search) params.set('what', search);
+  const url = `https://api.adzuna.com/v1/api/jobs/${country}/search/1?${params.toString()}`;
   const res = await fetchWithTimeout(url);
   if (!res.ok) throw new Error(`Adzuna ${res.status}`);
   const data = await res.json();
@@ -205,14 +255,17 @@ export interface ScanSourceResult {
 }
 
 // Runs every source in parallel; one failing never blocks the others.
-export async function scanAllSources(): Promise<ScanSourceResult[]> {
+// Passing target titles makes the search-based boards (Remotive, Himalayas,
+// Jobicy and Adzuna) ask for that work instead of a generic feed.
+export async function scanAllSources(targetTitles: string[] = []): Promise<ScanSourceResult[]> {
+  const primaryTitle = targetTitles[0];
   const sources: { name: string; fn: () => Promise<NormalizedJob[]> }[] = [
     { name: 'remoteok', fn: fetchRemoteOK },
-    { name: 'remotive', fn: fetchRemotive },
-    { name: 'himalayas', fn: fetchHimalayas },
+    { name: 'remotive', fn: () => fetchRemotive(primaryTitle) },
+    { name: 'himalayas', fn: () => fetchHimalayas(primaryTitle) },
     { name: 'arbeitnow', fn: fetchArbeitnow },
-    { name: 'jobicy', fn: fetchJobicy },
-    { name: 'adzuna', fn: fetchAdzuna },
+    { name: 'jobicy', fn: () => fetchJobicy(primaryTitle) },
+    { name: 'adzuna', fn: () => fetchAdzuna(primaryTitle) },
   ];
 
   const results = await Promise.allSettled(sources.map((s) => s.fn()));
@@ -229,13 +282,21 @@ export async function scanAllSources(): Promise<ScanSourceResult[]> {
 // many users should download them once, not once per user. Warm serverless
 // instances also reuse the result for a few minutes, which keeps repeated
 // "Scan now" presses from hammering the boards or the Adzuna quota.
+// Targeted manual scans get their own cache entry because their query differs
+// from the shared cron scan.
 const SHARED_TTL_MS = 10 * 60 * 1000;
-let sharedCache: { at: number; results: ScanSourceResult[] } | null = null;
+let sharedCache: { at: number; key: string; results: ScanSourceResult[] } | null = null;
 
-export async function getSharedSources(maxAgeMs: number = SHARED_TTL_MS): Promise<ScanSourceResult[]> {
-  if (sharedCache && Date.now() - sharedCache.at < maxAgeMs) return sharedCache.results;
-  const results = await scanAllSources();
+export async function getSharedSources(
+  maxAgeMs: number = SHARED_TTL_MS,
+  targetTitles: string[] = []
+): Promise<ScanSourceResult[]> {
+  const key = primaryTargetQuery(targetTitles[0]) || '';
+  if (sharedCache && sharedCache.key === key && Date.now() - sharedCache.at < maxAgeMs) {
+    return sharedCache.results;
+  }
+  const results = await scanAllSources(targetTitles);
   // Don't cache a run where every source failed.
-  if (results.some((r) => r.jobs.length > 0)) sharedCache = { at: Date.now(), results };
+  if (results.some((r) => r.jobs.length > 0)) sharedCache = { at: Date.now(), key, results };
   return results;
 }
